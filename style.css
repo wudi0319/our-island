@@ -59,3 +59,6 @@ li.done .chk{background:#7cc96b;border-color:#5aa84a}
 #toast{z-index:30}
 #grab{position:absolute;right:16px;bottom:128px;z-index:4;border:3px solid #fff;background:#ffd23f;color:#7a4b1d;font-weight:900;font-size:15px;border-radius:20px;padding:9px 14px;box-shadow:0 4px 0 #e0a020}
 #grab:active{transform:translateY(3px);box-shadow:0 1px 0 #e0a020}
+#toolbar{grid-template-columns:repeat(6,1fr);gap:4px}.tool{font-size:10.5px;padding:3px 0 2px}.tool canvas{width:28px;height:28px}
+.emptyRoom{display:none;text-align:center;font-size:64px;padding-top:18vh}.emptyRoom p{font-size:16px;color:#b08050;font-weight:800}
+#house.room .emptyRoom{display:block}#house.room .food{display:none}

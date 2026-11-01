@@ -70,3 +70,19 @@ S.puppy=(c,dir,phase,moving,kind='white')=>{const P=PUP[kind]||PUP.white,K='#1e1
  c.beginPath();c.moveTo((side?fx+.1*f:fx)-.03,hy+.13);c.quadraticCurveTo(side?fx+.1*f:fx,hy+.16,(side?fx+.1*f:fx)+.03,hy+.13);line(.03);
  c.globalAlpha=.7;if(side)ell(fx-.03*f,hy+.1,.04,.024,'#ffa3b5',0);else{ell(fx-.16,hy+.09,.045,.026,'#ffa3b5',0);ell(fx+.16,hy+.09,.045,.026,'#ffa3b5',0)}c.globalAlpha=1;
  c.restore()};
+
+// 胖仔食堂: cream walls, striped awning, big bowl sign on the roof
+S.canteen=c=>{const sh=(x,y,rx,ry)=>{c.beginPath();c.ellipse(x,y,rx,ry,0,0,7);c.fillStyle='rgba(60,40,20,.18)';c.fill()};sh(.5,.95,.47,.08);
+ rr(c,.08,.36,.84,.58,.06,'#fff6e0');
+ c.beginPath();c.moveTo(.02,.4);c.lineTo(.12,.14);c.lineTo(.88,.14);c.lineTo(.98,.4);c.closePath();c.fillStyle='#ffb347';c.fill();c.lineWidth=.035;c.strokeStyle=OL;c.stroke();
+ // awning stripes + scallops
+ for(let k=0;k<7;k++){const x=.08+k*.12;c.beginPath();c.arc(x+.06,.52,.06,0,Math.PI);c.fillStyle=k%2?'#fff':'#ff5a5a';c.fill();c.lineWidth=.025;c.strokeStyle=OL;c.stroke();rr(c,x,.42,.12,.1,0,k%2?'#fff':'#ff5a5a',false)}
+ c.beginPath();c.moveTo(.08,.42);c.lineTo(.92,.42);c.lineWidth=.03;c.strokeStyle=OL;c.stroke();
+ // window with counter + door
+ rr(c,.14,.62,.2,.18,.04,'#9be0ff');rr(c,.68,.62,.2,.18,.04,'#9be0ff');c.beginPath();c.moveTo(.14,.71);c.lineTo(.34,.71);c.moveTo(.68,.71);c.lineTo(.88,.71);c.lineWidth=.02;c.strokeStyle=OL;c.stroke();
+ rr(c,.42,.6,.18,.34,.08,'#b5703c');circ(c,.56,.78,.02,'#ffd84a',false);
+ // bowl sign on roof edge
+ c.beginPath();c.arc(.5,.08,.11,0,Math.PI);c.closePath();c.fillStyle='#fff';c.fill();c.lineWidth=.03;c.strokeStyle=OL;c.stroke();
+ c.beginPath();c.moveTo(.42,.0);c.lineTo(.56,-.08);c.moveTo(.47,.0);c.lineTo(.6,-.06);c.lineWidth=.025;c.stroke();
+ circ(c,.5,.13,.025,'#ff8fb8',false)};
+S.canteenIcon=c=>{c.save();c.translate(.02,.12);c.scale(.96,.86);S.canteen(c);c.restore()};

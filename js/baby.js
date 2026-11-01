@@ -15,7 +15,7 @@ grabBtn.addEventListener('pointerdown',e=>{e.preventDefault();baby.carried?babyD
 function babyGrab(){baby.carried=true;baby.mode='carry';baby.nextBub=1.5;say(pick(BABY_SAY.carry))}
 function babyDrop(){const p=state.player,d=[[0,1],[0,-1],[-1,0],[1,0]][p.dir];const c=[d,[0,1],[1,0],[-1,0],[0,-1]];
  for(const[dx,dy]of c){const x=Math.floor(p.x)+dx+.5,y=Math.floor(p.y)+dy+.5;if(babyFree(x,y)){baby.x=x;baby.y=y;baby.carried=false;babyMode('hop',1.2);say('胖宝自由啦～');return}}toast('这里放不下胖宝')}
-function babyHome(){for(const k in state.obj)if(state.obj[k]==='house')return[k%W+.5,(k/W|0)+2.5];return[state.player.x,state.player.y+1]}
+function babyHome(){for(const k in state.obj)if(state.obj[k]==='house'||state.obj[k]==='canteen')return[k%W+.5,(k/W|0)+2.5];return[state.player.x,state.player.y+1]}
 function babyFree(x,y){const r=.2;return![[x-r,y-.05],[x+r,y-.05],[x-r,y+.15],[x+r,y+.15]].some(([a,b])=>blocked(Math.floor(a),Math.floor(b)))}
 function babyName(){state.baby=state.baby||{name:'胖宝'};return state.baby.name||'胖宝'}
 function say(m){baby.bub=m.replace(/胖宝/g,babyName());baby.bubT=3.5;baby.nextBub=6+Math.random()*9}
