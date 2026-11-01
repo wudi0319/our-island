@@ -27,12 +27,12 @@ function loadState(){const s=Store.load();if(s&&s.v===2&&s.ter&&s.ter.length===W
 let charKind=localStorage.getItem('our-island-char')||'white';
 function setChar(k){charKind=k;localStorage.setItem('our-island-char',k);document.querySelectorAll('#menu [data-char]').forEach(b=>b.classList.toggle('on',b.dataset.char===k))}
 let state=loadState(),tool='hoe',seed='carrot',dirty=false,lastSave=0;
-// ---- big houses: obj 'house' sits on the bottom-middle tile, footprint x-1..x+1, y-2..y ----
-let occ={};const foot=a=>{const x=a%W,y=a/W|0,r=[];for(let dy=-2;dy<=0;dy++)for(let dx=-1;dx<=1;dx++)if(x+dx>=0&&x+dx<W&&y+dy>=0)r.push((y+dy)*W+x+dx);return r};
+// ---- big houses: obj 'house' sits on the door tile (bottom row), footprint x-1..x+2, y-3..y (4x4) ----
+let occ={};const foot=a=>{const x=a%W,y=a/W|0,r=[];for(let dy=-3;dy<=0;dy++)for(let dx=-1;dx<=2;dx++)if(x+dx>=0&&x+dx<W&&y+dy>=0)r.push((y+dy)*W+x+dx);return r};
 function rebuildOcc(){occ={};for(const k in state.obj)if(state.obj[k]==='house')foot(+k).forEach(j=>occ[j]=+k)}
-function migrate(){state.names=state.names||{};let ch=false;
+function migrate(){state.names=state.names||{};state.lists=state.lists||{};let ch=false;
  for(const k in state.obj)if(state.obj[k]==='house'){const a=+k,x=a%W,y=a/W|0;
-  if(x<1||x>W-2||y<2){delete state.obj[k];ch=true;continue}
+  if(x<1||x>W-3||y<3){delete state.obj[k];ch=true;continue}
   for(const j of foot(a)){if(j!==a&&state.obj[j]){if(state.obj[j]==='house'){delete state.obj[a];break}delete state.obj[j];ch=true}
    if(state.crops[j]){delete state.crops[j];ch=true}if(state.ter[j]===0||state.ter[j]===3){state.ter[j]=2;ch=true}}
   if(state.obj[k]&&state.names[k]==null){state.names[k]='我们的家';ch=true}}
@@ -79,7 +79,7 @@ function update(dt){const p=state.player;let vx=jv.x,vy=jv.y;
 const toastEl=document.getElementById('toast');let tt;
 function toast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove('show'),1500)}
 function act(){const[x,y]=front();if(!inb(x,y))return;const i=idx(x,y);
- if(occ[i]!=null){const a=occ[i];if(tool==='erase'){delete state.obj[a];delete state.names[a];rebuildOcc();save();return toast('小屋拆掉了')}return openSign(a)}
+ if(occ[i]!=null){const a=occ[i];if(tool==='erase'){delete state.obj[a];if((state.lists[a]||[]).length&&!confirm('小屋里还有心愿清单，确定拆掉吗？'))return;delete state.names[a];delete state.lists[a];rebuildOcc();save();return toast('小屋拆掉了')}return i===a?openHouse(a):openSign(a)}
  const t=state.ter[i],o=state.obj[i],c=state.crops[i];
  const p=state.player,pi=idx(Math.floor(p.x),Math.floor(p.y));
  switch(tool){
@@ -89,7 +89,7 @@ function act(){const[x,y]=front();if(!inb(x,y))return;const i=idx(x,y);
  case'basket':if(!c||c.stage<2)return toast('还没成熟呢');state.inv[c.type]++;toast('收获 '+CROPS[c.type].name+' +1');delete state.crops[i];break;
  case'axe':if(o!=='tree')return toast('前面没有树');delete state.obj[i];state.inv.wood=(state.inv.wood||0)+3;toast('木头 +3');break;
  case'erase':if(o)delete state.obj[i];else if(c)delete state.crops[i];else if(t===SOIL)state.ter[i]=GRASS;else return;break;
- case'house':{if(x<1||x>W-2||y<2)return toast('这里放不下');const fp=foot(i);if(fp.length<9||fp.some(j=>state.ter[j]===WATER||state.obj[j]||state.crops[j]||state.ter[j]===SOIL||occ[j]!=null))return toast('需要3×3的空地哦');
+ case'house':{if(x<1||x>W-3||y<3)return toast('这里放不下');const fp=foot(i);if(fp.length<16||fp.some(j=>state.ter[j]===WATER||state.obj[j]||state.crops[j]||state.ter[j]===SOIL||occ[j]!=null))return toast('需要4×4的空地哦');
   state.obj[i]='house';state.names[i]='我们的家';rebuildOcc();if(!canStand(p.x,p.y)){delete state.obj[i];delete state.names[i];rebuildOcc();return toast('离太近啦，退后一点')}break}
  default:if(i===pi)return;if(t===WATER)return toast('不能放在水里');if(o||c||t===SOIL)return toast('这里放不下');state.obj[i]=tool;if(SOLID[tool]&&!canStand(p.x,p.y)){delete state.obj[i];return toast('离太近啦，退后一点')}}
  save();renderInv()}
@@ -122,7 +122,7 @@ function draw(){frame++;const p=state.player;
   for(let x=Math.max(0,x0-1);x<=Math.min(W-1,x1+1);x++){const i=idx(x,y),c=state.crops[i],o=state.obj[i];
    if(c){sprite(S.crop,x,y,c.type,c.stage);if(c.stage===2&&(frame>>4)%2)sprite((g)=>circ(g,.85,.15,.07,'#fff6a0'),x,y)}
    if(o==='fence')sprite(S.fence,x,y,isFence(x,y-1),isFence(x+1,y),isFence(x,y+1),isFence(x-1,y));
-   else if(o==='house'){ctx.save();ctx.translate((x-1.6)*T,(y-2.75)*T);ctx.scale(T*3.2,T*3.2);S.house(ctx);ctx.restore();drawSign(x,y,state.names[i]||'我们的家')}
+   else if(o==='house'){ctx.save();ctx.translate((x-1.6)*T,(y-2.99)*T);ctx.scale(T*4.2,T*4.2);S.house(ctx);ctx.restore();drawSign(x,y,state.names[i]||'我们的家')}
    else if(o==='tree'){ctx.save();ctx.translate((x-.15)*T,(y-.6)*T);ctx.scale(T*1.3,T*1.6);S.tree(ctx);ctx.restore()}
    else if(o)sprite(S[o],x,y)}
   if(y===py){ctx.save();ctx.translate((p.x-.7)*T,(p.y-1.2)*T);ctx.scale(T*1.4,T*1.4);S.puppy(ctx,p.dir,phase,moving,charKind);ctx.restore()}}
@@ -130,9 +130,11 @@ function draw(){frame++;const p=state.player;
 let last=performance.now();
 function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();if(dirty&&now-lastSave>2000){lastSave=now;save()}requestAnimationFrame(loop)}
 
-function drawSign(x,y,name){const w=Math.max(1.2,Math.min(2.6,.32*Array.from(name).length+.4))*T,h=.48*T,sx=(x+1.35)*T-w/2,sy=(y+.3)*T;
- ctx.fillStyle='#8a5a32';ctx.fillRect(sx+w*.2-3,sy+h-2,6,T*.35);ctx.fillRect(sx+w*.8-3,sy+h-2,6,T*.35);
- ctx.beginPath();ctx.roundRect(sx,sy,w,h,10);ctx.fillStyle='#fff3d6';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='#5a3a22';ctx.stroke();
+const plaque=(x,y,name)=>{const w=Math.max(1.1,Math.min(2.4,.3*Array.from(name).length+.45)),h=.5;return{x:x+.5-w/2,y:y-1.98,w,h}};
+function drawSign(x,y,name){const q=plaque(x,y,name),sx=q.x*T,sy=q.y*T,w=q.w*T,h=q.h*T;
+ ctx.beginPath();ctx.roundRect(sx,sy+3,w,h,12);ctx.fillStyle='rgba(90,58,34,.35)';ctx.fill();
+ ctx.beginPath();ctx.roundRect(sx,sy,w,h,12);ctx.fillStyle='#fff3d6';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='#5a3a22';ctx.stroke();
+ ctx.fillStyle='#ff9ab0';[sx+8,sx+w-8].forEach(cx=>{ctx.beginPath();ctx.arc(cx,sy+h/2,3,0,7);ctx.fill()});
  ctx.fillStyle='#7a4b1d';ctx.font=`900 ${T*.3}px "Yuanti SC","PingFang SC","Hiragino Maru Gothic ProN",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(name,sx+w/2,sy+h/2+1)}
 const dlg=document.getElementById('signDlg'),signIn=document.getElementById('signIn');let signA=null;
 function openSign(a){signA=a;signIn.value=state.names[a]||'';dlg.classList.remove('hidden');setTimeout(()=>signIn.focus(),50)}
@@ -140,7 +142,30 @@ function closeSign(ok){if(ok&&signA!=null){const v=Array.from(signIn.value.trim(
 document.getElementById('signOk').onclick=()=>closeSign(true);document.getElementById('signCancel').onclick=()=>closeSign(false);
 signIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)closeSign(true)});
 cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),p=state.player;let cx=p.x*T-vw/2,cy=p.y*T-vh/2;cx=Math.max(0,Math.min(W*T-vw,cx));cy=Math.max(0,Math.min(H*T-vh,cy));
- const wx=(e.clientX-r.left+cx)/T,wy=(e.clientY-r.top+cy)/T;for(const k in state.obj)if(state.obj[k]==='house'){const ax=k%W+1.35,ay=(k/W|0)+.54;if(Math.abs(wx-ax)<1.3&&Math.abs(wy-ay)<.4&&Math.hypot(p.x-ax,p.y-ay)<4)return openSign(+k)}});
+ const wx=(e.clientX-r.left+cx)/T,wy=(e.clientY-r.top+cy)/T;for(const k in state.obj)if(state.obj[k]==='house'){const x=k%W,y=k/W|0;if(Math.hypot(p.x-(x+.5),p.y-(y-1))>6)continue;
+  const q=plaque(x,y,state.names[k]||'我们的家');if(wx>=q.x-.1&&wx<=q.x+q.w+.1&&wy>=q.y-.15&&wy<=q.y+q.h+.15)return openSign(+k);
+  if(wx>=x-1&&wx<=x+3&&wy>=y-1.4&&wy<=y+1)return openHouse(+k)}});
+// ---- inside the house: food wishlist (stored per house in state.lists, syncs later) ----
+const houseEl=document.getElementById('house'),listEl=document.getElementById('wishList'),doneEl=document.getElementById('doneList'),form=document.getElementById('wishForm');let houseA=null,editId=null;
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl=u=>{u=(u||'').trim();if(!u)return'';if(!/^https?:\/\//i.test(u))u='https://'+u;try{const x=new URL(u);return/^https?:$/.test(x.protocol)?x.href:''}catch(e){return''}};
+const fmt=ts=>{const d=new Date(ts);return`${d.getMonth()+1}月${d.getDate()}日`};
+function openHouse(a){houseA=a;state.lists[a]=state.lists[a]||[];document.getElementById('houseTitle').textContent='🏠 '+(state.names[a]||'我们的家');closeForm();renderList();houseEl.classList.remove('hidden')}
+function renderList(){const L=state.lists[houseA]||[];const todo=L.filter(i=>!i.done),done=L.filter(i=>i.done).sort((a,b)=>b.done-a.done);
+ const card=i=>`<li data-id="${i.id}" class="${i.done?'done':''}"><button class="chk" data-a="toggle">${i.done?'✔':''}</button><div class="txt"><b>${esc(i.name)}</b>${i.note?`<p>${esc(i.note)}</p>`:''}${i.url?`<a href="${esc(i.url)}" target="_blank" rel="noopener">🔗 打开链接</a>`:''}<small>${i.done?'吃过了 · '+fmt(i.done):'添加于 '+fmt(i.added)}</small></div><button class="ic" data-a="edit">✏️</button><button class="ic" data-a="del">🗑️</button></li>`;
+ listEl.innerHTML=todo.map(card).join('')||'<p class="empty">还没有想吃的，刷到好吃的就加进来吧～</p>';doneEl.innerHTML=done.map(card).join('');document.getElementById('doneHead').classList.toggle('hidden',!done.length)}
+houseEl.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const id=b.closest('li').dataset.id,L=state.lists[houseA],it=L.find(i=>i.id===id);if(!it)return;
+ if(b.dataset.a==='toggle'){it.done=it.done?null:Date.now();if(it.done)toast('吃过了「'+it.name+'」😋')}
+ else if(b.dataset.a==='del'){if(!confirm('删除「'+it.name+'」？'))return;L.splice(L.indexOf(it),1)}
+ else if(b.dataset.a==='edit'){openForm(it);return}save();renderList()});
+function openForm(it){editId=it?it.id:null;form.name.value=it?it.name:'';form.note.value=it?it.note||'':'';form.url.value=it?it.url||'':'';document.getElementById('formTitle').textContent=it?'修改':'想一起吃…';form.classList.remove('hidden');document.getElementById('addBtn').classList.add('hidden');setTimeout(()=>form.name.focus(),50)}
+function closeForm(){form.classList.add('hidden');document.getElementById('addBtn').classList.remove('hidden');editId=null;document.activeElement&&document.activeElement.blur()}
+document.getElementById('addBtn').onclick=()=>openForm(null);document.getElementById('formCancel').onclick=closeForm;
+form.addEventListener('submit',e=>{e.preventDefault();const name=form.name.value.trim().slice(0,40);if(!name)return toast('写下想吃什么吧');const note=form.note.value.trim().slice(0,200),url=safeUrl(form.url.value);
+ if(form.url.value.trim()&&!url)return toast('链接好像不对哦');const L=state.lists[houseA];
+ if(editId){Object.assign(L.find(i=>i.id===editId),{name,note,url})}else L.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name,note,url,added:Date.now(),done:null});
+ save();closeForm();renderList()});
+document.getElementById('houseClose').onclick=()=>{closeForm();houseEl.classList.add('hidden');houseA=null};
 // ---- UI ----
 function icon(name){const c=document.createElement('canvas');c.width=c.height=60;const g=c.getContext('2d');g.scale(60,60);S[name](g);return c}
 const tb=document.getElementById('toolbar'),seedsEl=document.getElementById('seeds');
@@ -153,4 +178,4 @@ menu.querySelectorAll('[data-char]').forEach(b=>{const c=b.querySelector('canvas
 document.getElementById('menuClose').onclick=()=>menu.classList.add('hidden');setChar(charKind);
 addEventListener('resize',resize);addEventListener('pagehide',save);document.addEventListener('visibilitychange',()=>document.hidden&&save());
 resize();renderInv();tick();setInterval(tick,1000);requestAnimationFrame(loop);
-window.Game={get state(){return state},set state(s){state=s;save();renderInv()},act,front,openSign,setChar,setTool:k=>tb.querySelector(`[data-tool=${k}]`).click()}; // hooks for sync/tests
+window.Game={get state(){return state},set state(s){state=s;save();renderInv()},act,front,openSign,openHouse,setChar,setTool:k=>tb.querySelector(`[data-tool=${k}]`).click()}; // hooks for sync/tests

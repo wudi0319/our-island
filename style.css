@@ -34,3 +34,26 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
 #signIn{display:block;width:100%;margin:12px 0;font-size:18px;padding:10px;border:2px solid #e0a96d;border-radius:12px;text-align:center;color:#7a4b1d;background:#fff;user-select:text;-webkit-user-select:text;outline:none;font-weight:700}
 #signDlg .row{display:flex;gap:10px;justify-content:center}#signDlg .row button{border:0;border-radius:14px;padding:8px 22px;font-size:15px;font-weight:800}
 #signCancel{background:#f0d6ae;color:#7a4b1d}#signOk{background:#ffb347;color:#fff;box-shadow:0 3px 0 #d9822b}
+#house{position:fixed;inset:0;z-index:15;background:#fff3e0;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);background-image:radial-gradient(#ffe0c2 2px,transparent 2px);background-size:22px 22px}
+.hhead{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#ff8c5a;color:#fff;border-bottom:4px solid #e0703f}
+.hhead h2{margin:0;font-size:19px;font-weight:900}.hhead span{width:64px}
+#houseClose{width:64px;border:0;background:rgba(255,255,255,.25);color:#fff;border-radius:12px;padding:6px 8px;font-weight:800;font-size:14px}
+.hbody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 30px;color:#7a4b1d}
+.hbody h3{margin:8px 2px;font-size:16px}
+.hbody ul{list-style:none;margin:0;padding:0}
+.hbody li{display:flex;align-items:flex-start;gap:8px;background:#fff;border:2px solid #f0d6ae;border-radius:16px;padding:10px;margin-bottom:8px;box-shadow:0 2px 0 #f0d6ae}
+.hbody li.done{opacity:.65}.hbody li.done b{text-decoration:line-through}
+.chk{flex:0 0 30px;height:30px;border-radius:50%;border:3px solid #ffb347;background:#fff;color:#fff;font-weight:900;font-size:15px;padding:0}
+li.done .chk{background:#7cc96b;border-color:#5aa84a}
+.txt{flex:1;min-width:0}.txt b{font-size:16px;display:block;word-break:break-all}.txt p{margin:3px 0;font-size:13px;color:#9a6a3d;word-break:break-all}
+.txt a{display:inline-block;margin:3px 0;font-size:13px;color:#e8743b;font-weight:700;text-decoration:none}
+.txt small{display:block;font-size:11px;color:#c09a70;margin-top:2px}
+.ic{border:0;background:none;font-size:17px;padding:2px}
+.empty{text-align:center;color:#c09a70;font-size:14px;padding:14px}
+#addBtn{width:100%;border:2px dashed #ffb347;background:#fff8e7;color:#e8743b;font-weight:900;font-size:16px;border-radius:16px;padding:12px;margin:4px 0 10px}
+#wishForm{background:#fff;border:2px solid #ffb347;border-radius:16px;padding:12px;margin:4px 0 10px;display:flex;flex-direction:column;gap:8px}
+#wishForm input{font-size:16px;padding:10px;border:2px solid #f0d6ae;border-radius:12px;color:#7a4b1d;user-select:text;-webkit-user-select:text;outline:none;width:100%}
+#wishForm input:focus{border-color:#ffb347}
+#wishForm .row{display:flex;gap:10px;justify-content:flex-end}#wishForm .row button{border:0;border-radius:12px;padding:8px 20px;font-size:15px;font-weight:800}
+#formCancel{background:#f0d6ae;color:#7a4b1d}#wishForm button[type=submit]{background:#ffb347;color:#fff;box-shadow:0 3px 0 #d9822b}
+#toast{z-index:30}

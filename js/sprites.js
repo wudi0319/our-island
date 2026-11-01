@@ -8,7 +8,7 @@ S.tree=c=>{shadow(c,.5,.92,.32,.09);rr(c,.42,.55,.16,.38,.06,'#a8693a');circ(c,.
 S.flower=c=>{c.strokeStyle='#3f9a3a';c.lineWidth=.06;c.beginPath();c.moveTo(.5,.85);c.lineTo(.5,.5);c.stroke();
  [[0,-1],[1,0],[0,1],[-1,0],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]].slice(0,5).forEach(([dx,dy],i)=>circ(c,.5+dx*.12,.42+dy*.12,.1,'#ff8fb8'));circ(c,.5,.42,.08,'#ffd84a')};
 S.house=c=>{shadow(c,.5,.95,.45,.08);rr(c,.12,.42,.76,.52,.06,'#fff1d6');c.beginPath();c.moveTo(.02,.48);c.quadraticCurveTo(.5,-.08,.98,.48);c.closePath();c.fillStyle='#ff7a4d';c.fill();c.lineWidth=.045;c.strokeStyle=OL;c.stroke();
- rr(c,.42,.64,.18,.3,.08,'#b5703c');rr(c,.18,.56,.17,.15,.04,'#9be0ff');rr(c,.67,.56,.15,.15,.04,'#9be0ff');circ(c,.5,.3,.06,'#fff3a0')};
+ rr(c,.42,.64,.18,.3,.08,'#b5703c');rr(c,.18,.56,.17,.15,.04,'#9be0ff');rr(c,.67,.56,.15,.15,.04,'#9be0ff');};
 S.rock=c=>{shadow(c,.5,.85,.3,.07);c.beginPath();c.ellipse(.5,.66,.3,.22,0,0,7);c.fillStyle='#b9bfc8';c.fill();c.lineWidth=.045;c.strokeStyle=OL;c.stroke();circ(c,.42,.6,.06,'#d8dde3',false)};
 // fence autotile: n,e,s,w booleans
 S.fence=(c,n,e,s,w)=>{const rail=(x1,y1,x2,y2)=>{c.lineCap='round';c.strokeStyle=OL;c.lineWidth=.16;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();c.strokeStyle='#e0a96d';c.lineWidth=.08;c.stroke()};
