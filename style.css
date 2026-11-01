@@ -62,3 +62,5 @@ li.done .chk{background:#7cc96b;border-color:#5aa84a}
 #toolbar{grid-template-columns:repeat(6,1fr);gap:4px}.tool{font-size:10.5px;padding:3px 0 2px}.tool canvas{width:28px;height:28px}
 .emptyRoom{display:none;text-align:center;font-size:64px;padding-top:18vh}.emptyRoom p{font-size:16px;color:#b08050;font-weight:800}
 #house.room .emptyRoom{display:block}#house.room .food{display:none}
+#info{position:absolute;top:calc(env(safe-area-inset-top) + 50px);right:8px;z-index:5;background:rgba(255,248,231,.93);border:2px solid #e0a96d;border-radius:14px;padding:5px 9px;font-size:12px;line-height:1.55;color:#7a4b1d;box-shadow:0 2px 0 #e0a96d;font-variant-numeric:tabular-nums;max-width:62vw}
+#info b{color:#e8743b;font-weight:900}#info.mini{padding:3px 8px}
