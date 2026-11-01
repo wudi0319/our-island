@@ -62,7 +62,7 @@ function drawCarried(){const b=baby,p=state.player,X=p.x*T,Y=(p.y-.12)*T,sz=T*.8
  ctx.save();ctx.translate(X+(p.dir===2?-.18:p.dir===3?.18:0)*T,Y);ctx.rotate(Math.sin(performance.now()/90)*.08);ctx.scale(1.15,1);ctx.translate(-sz/2,-sz*.94);ctx.scale(sz,sz);
  S.puppy(ctx,p.dir===1?1:0,b.phase,true,'baby');ctx.restore();
  // arms hugging
- ctx.fillStyle=charKind==='yellow'?'#ffe9b0':'#fff';ctx.strokeStyle='#1e1a18';ctx.lineWidth=2.5;[-1,1].forEach(s=>{ctx.beginPath();ctx.ellipse(X+s*T*.26,Y-T*.32,T*.09,T*.07,0,0,7);ctx.fill();ctx.stroke()});
+ ctx.fillStyle=charKind==='yellow'?'#f6dfb4':'#fff';ctx.strokeStyle='#1e1a18';ctx.lineWidth=2.5;[-1,1].forEach(s=>{ctx.beginPath();ctx.ellipse(X+s*T*.26,Y-T*.32,T*.09,T*.07,0,0,7);ctx.fill();ctx.stroke()});
  const ny=Y-sz*1.05;ctx.textAlign='center';ctx.textBaseline='middle';
  if(b.bubT>0){ctx.font=`800 ${T*.27}px "PingFang SC",sans-serif`;const tw=ctx.measureText(b.bub).width+20,by=ny-40;ctx.globalAlpha=Math.min(1,b.bubT*2);
   ctx.beginPath();ctx.roundRect(X-tw/2,by-15,tw,30,15);ctx.moveTo(X-6,by+15);ctx.lineTo(X,by+23);ctx.lineTo(X+6,by+15);ctx.fillStyle='#fff8e7';ctx.fill();ctx.lineWidth=2.5;ctx.strokeStyle='#e0a96d';ctx.stroke();ctx.fillStyle='#7a4b1d';ctx.fillText(b.bub,X,by+1);ctx.globalAlpha=1}

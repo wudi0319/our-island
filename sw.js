@@ -1,4 +1,4 @@
-const C='island-v13',F=['./','index.html','style.css?v=13','js/store.js?v=13','js/sprites.js?v=13','js/game.js?v=13','js/baby.js?v=13','js/info.js?v=13','manifest.webmanifest','icon-180.png'];
+const C='island-v14',F=['./','index.html','style.css?v=14','js/store.js?v=14','js/sprites.js?v=14','js/game.js?v=14','js/baby.js?v=14','js/info.js?v=14','manifest.webmanifest','icon-180.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(F)));self.skipWaiting()});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{const u=new URL(e.request.url);
