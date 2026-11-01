@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="我们的小岛">
+<meta name="theme-color" content="#6cc3e8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>我们的小岛</title>
+<link rel="stylesheet" href="style.css">
+</head><body>
+<header id="top"><div id="title">🏝️ 我们的小岛</div><div id="inv"></div></header>
+<main><canvas id="map"></canvas><div id="toast"></div></main>
+<nav id="toolbar"></nav>
+<div id="seeds" class="hidden"></div>
+<script src="js/store.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/game.js"></script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');</script>
+</body></html>
