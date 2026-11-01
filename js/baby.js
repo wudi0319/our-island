@@ -6,6 +6,8 @@ const BABY_SAY={
  sleep:['胖宝睡着了','胖宝在做美梦','胖宝打呼噜','胖宝梦见了大骨头','胖宝梦见爸爸妈妈','嘘…胖宝在睡觉'],
  hop:['胖宝蹦蹦跳跳','胖宝超开心！','胖宝转圈圈','胖宝跳起来了'],
  carry:['放开我~','胖宝挣扎中','胖宝要下来','幸福的胖宝','胖宝蹬蹬腿','被抱住啦！','胖宝跑不掉了','胖宝在爸爸妈妈怀里'],
+ dad:['爸爸的胡子扎扎的','爸爸举高高！','胖宝想爸爸好久了','爸爸什么时候回家呀','爸爸抱得好稳','胖宝抓爸爸头发','爸爸身上暖暖的','胖宝骑在爸爸肩上','爸爸讲故事给胖宝听','胖宝亲了爸爸一口','爸爸最厉害了','胖宝给爸爸摸摸头','爸爸的肚子软软的','爸爸不要走好不好','胖宝在爸爸怀里偷笑'],
+ mom:['妈妈香香的','妈妈辛苦啦','胖宝要妈妈亲亲','妈妈最好了','胖宝在妈妈怀里睡着了','胖宝要吃奶奶','妈妈的手软软的','胖宝蹭蹭妈妈','妈妈唱歌给胖宝听','胖宝最爱妈妈了','妈妈抱抱就不哭了','胖宝帮妈妈捶捶背','妈妈今天好漂亮','胖宝在妈妈怀里撒娇','妈妈陪胖宝玩'],
  tap:['最喜欢爸爸妈妈了！','胖宝爱你哦 ❤','抱抱～','嘿嘿，好痒','亲亲！','胖宝今天很乖哦','要一直在一起哦','爸爸妈妈辛苦啦']};
 const pick=a=>a[Math.random()*a.length|0];
 const baby={x:0,y:0,dir:0,mode:'idle',t:1,tx:0,ty:0,phase:0,bub:'',bubT:0,nextBub:3,hop:0,heart:0,init:false,carried:false,sprint:0,puffs:[]};
@@ -14,7 +16,8 @@ function babySprint(){const p=state.player;for(let k=0;k<24;k++){const a=Math.at
 const grabBtn=document.getElementById('grab');
 function setGrab(show,txt){if(grabBtn.classList.contains('hidden')===show)grabBtn.classList.toggle('hidden',!show);if(grabBtn.textContent!==txt)grabBtn.textContent=txt}
 grabBtn.addEventListener('pointerdown',e=>{e.preventDefault();baby.carried?babyDrop():babyGrab()});
-function babyGrab(){baby.carried=true;baby.mode='carry';baby.nextBub=1.5;say(pick(BABY_SAY.carry))}
+function carryLine(){return Math.random()<.4?pick(BABY_SAY[(localStorage.getItem('our-island-char')||'white')==='yellow'?'mom':'dad']):pick(BABY_SAY.carry)}
+function babyGrab(){baby.carried=true;baby.mode='carry';baby.nextBub=1.5;say(carryLine())}
 function babyDrop(){const p=state.player,d=[[0,1],[0,-1],[-1,0],[1,0]][p.dir];const c=[d,[0,1],[1,0],[-1,0],[0,-1]];
  for(const[dx,dy]of c){const x=Math.floor(p.x)+dx+.5,y=Math.floor(p.y)+dy+.5;if(babyFree(x,y)){baby.x=x;baby.y=y;baby.carried=false;if(Math.random()<.5&&babySprint())return;babyMode('hop',1.2);say(pick(['胖宝自由啦～','胖宝落地啦','胖宝开心地蹦了蹦','胖宝站稳啦']));return}}toast('这里放不下胖宝')}
 function babyHome(){for(const k in state.obj)if(state.obj[k]==='house'||state.obj[k]==='canteen')return[k%W+.5,(k/W|0)+2.5];return[state.player.x,state.player.y+1]}
@@ -28,7 +31,7 @@ function babyUpdate(dt){if(!baby.init){const[hx,hy]=babyHome();baby.x=hx+1;baby.
  baby.sprint=Math.max(0,baby.sprint-dt);baby.puffs=baby.puffs.filter(f=>(f.t-=dt)>0);
  baby.phase+=dt*(baby.mode==='walk'?(baby.sprint>0?30:12):baby.mode==='hop'?14:3);baby.t-=dt;baby.bubT-=dt;baby.heart=Math.max(0,baby.heart-dt);baby.nextBub-=dt;
  const p=state.player;
- if(baby.carried){baby.x=p.x;baby.y=p.y;baby.phase+=dt*40;setGrab(true,'放下胖宝');if(baby.nextBub<0){say(pick(BABY_SAY.carry));baby.nextBub=3+Math.random()*4}return}
+ if(baby.carried){baby.x=p.x;baby.y=p.y;baby.phase+=dt*40;setGrab(true,'放下胖宝');if(baby.nextBub<0){say(carryLine());baby.nextBub=3+Math.random()*4}return}
  const dp=Math.hypot(p.x-baby.x,p.y-baby.y);setGrab(dp<1.5,'抓住胖宝');
  if(dp<.6&&baby.mode!=='walk'){babyMode('walk',4)}
  if(baby.mode==='walk'){const dx=baby.tx-baby.x,dy=baby.ty-baby.y,d=Math.hypot(dx,dy),sp=1.6*dt*(baby.sprint>0?2.7:1);if(baby.sprint>0&&Math.random()<dt*12)baby.puffs.push({x:baby.x,y:baby.y+.1,t:.5});
