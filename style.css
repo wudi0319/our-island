@@ -29,3 +29,8 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
 .pups button.on{border-color:#ff8c42;background:#ffe4cc}
 .pups canvas{width:80px;height:80px;display:block}
 #menuClose{border:0;background:#ffb347;color:#fff;font-weight:800;border-radius:14px;padding:8px 28px;font-size:15px;box-shadow:0 3px 0 #d9822b}
+#signDlg{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.3);display:flex;align-items:flex-start;justify-content:center;padding-top:22vh}
+#signDlg .card{background:#fff8e7;border:3px solid #e0a96d;border-radius:20px;padding:16px;width:280px;text-align:center;color:#7a4b1d}
+#signIn{display:block;width:100%;margin:12px 0;font-size:18px;padding:10px;border:2px solid #e0a96d;border-radius:12px;text-align:center;color:#7a4b1d;background:#fff;user-select:text;-webkit-user-select:text;outline:none;font-weight:700}
+#signDlg .row{display:flex;gap:10px;justify-content:center}#signDlg .row button{border:0;border-radius:14px;padding:8px 22px;font-size:15px;font-weight:800}
+#signCancel{background:#f0d6ae;color:#7a4b1d}#signOk{background:#ffb347;color:#fff;box-shadow:0 3px 0 #d9822b}
