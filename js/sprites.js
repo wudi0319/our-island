@@ -40,8 +40,41 @@ S.player=(c,dir,phase,moving)=>{const b=moving?Math.sin(phase)*.04:0,l=moving?Ma
  if(dir!==1){const ox=dir===2?-.08:dir===3?.08:0;circ(c,.42+ox,.36+b,.03,'#3a2a1a',false);circ(c,.58+ox,.36+b,.03,'#3a2a1a',false);circ(c,.36+ox,.42+b,.035,'#ffaaaa',false);circ(c,.64+ox,.42+b,.035,'#ffaaaa',false)}};
 window.S=S;window.rr=rr;window.circ=circ;
 // Original "line-puppy style" pup: round fluffy body, bold black hand-drawn outline.
+
+// 小白 v16: one merged fluffy blob, small even scallops (two-pass: outline then fill)
+function scallopPath(c,x,y,rx,ry,b=.028){const per=Math.PI*(rx+ry),n=Math.max(8,Math.round(per/b/1.9));c.moveTo(x+rx,y);
+ for(let i=0;i<n;i++){const a0=i/n*Math.PI*2,a1=(i+1)/n*Math.PI*2,am=(a0+a1)/2,k=1+b/Math.min(rx,ry)*.75;
+  c.quadraticCurveTo(x+Math.cos(am)*rx*k,y+Math.sin(am)*ry*k,x+Math.cos(a1)*rx,y+Math.sin(a1)*ry)}c.closePath()}
+S.whitePup=(c,dir,phase,moving)=>{const K='#221813',W=.03,s=moving?Math.sin(phase):0,sq=Math.abs(s);
+ c.save();c.translate(.5,.94);c.scale(1+sq*.06,1-sq*.08);c.translate(0,-sq*.05);c.translate(-.5,-.94);
+ c.beginPath();c.ellipse(.5,.955,.25,.045,0,0,7);c.fillStyle='rgba(90,60,30,.22)';c.fill();
+ const side=dir>=2,f=dir===2?-1:1,hx=side?.5+.04*f:.5,hy=.43,lg=moving?s*.035:0;
+ const parts=[];const P=(x,y,rx,ry,b)=>parts.push([x,y,rx,ry,b]);
+ // tail tuft
+ if(dir===1)P(.5,.74,.06,.05,.02);else if(side)P(.5-.2*f,.75,.045,.04,.016);
+ // legs
+ if(side){P(.42+lg,.89,.06,.05,.018);P(.58-lg,.89,.06,.05,.018)}else{P(.4,.89+lg,.065,.05,.018);P(.6,.89-lg,.065,.05,.018)}
+ // body + ears + head
+ P(.5,.745,.185,.165,.024);
+ if(side)P(hx-.13*f,hy-.2,.065,.06,.022);else{P(hx-.19,hy-.17,.07,.065,.02);P(hx+.19,hy-.17,.07,.065,.02)}
+ P(hx,hy,.28,.225,.024);
+ c.lineJoin='round';
+ for(const q of parts){c.beginPath();scallopPath(c,...q);c.lineWidth=W*2;c.strokeStyle=K;c.stroke()}
+ for(const q of parts){c.beginPath();scallopPath(c,...q);c.fillStyle='#fff';c.fill()}
+ if(!side&&dir!==1)[[-1],[1]].forEach(([q])=>{c.beginPath();c.arc(.5+q*.1,.73,.045,q<0?-.3:Math.PI*.6,q<0?Math.PI*.4:Math.PI+.3);c.strokeStyle=K;c.lineWidth=.022;c.lineCap='round';c.stroke()});
+ if(!side&&dir!==1){c.strokeStyle=K;c.lineWidth=.022;c.lineCap='round';c.beginPath();c.moveTo(.5,.87);c.lineTo(.5,.93);c.stroke()}
+ if(dir===1){c.restore();return}
+ const fx=side?hx+.09*f:hx,dx=side?0:.13,dot=(x,y,r,col)=>{c.beginPath();c.arc(x,y,r,0,7);c.fillStyle=col;c.fill()};
+ c.globalAlpha=.75;dot(fx-dx-.06,hy+.08,.038,'#ffb3c0');if(!side)dot(fx+dx+.06,hy+.08,.038,'#ffb3c0');c.globalAlpha=1;
+ if(S.closedEyes){c.strokeStyle=K;c.lineWidth=.028;[fx-dx,side?null:fx+dx].forEach(x=>{if(x==null)return;c.beginPath();c.arc(x,hy+.02,.026,.25,Math.PI-.25);c.stroke()})}
+ else{dot(side?fx+.02*f:fx-dx,hy+.025,.019,K);if(!side)dot(fx+dx,hy+.025,.019,K)}
+ const nx=side?fx+.11*f:fx;c.beginPath();c.ellipse(nx,hy+.06,.026,.018,0,0,7);c.fillStyle=K;c.fill();
+ // open mouth with tongue
+ const mp=()=>{c.beginPath();c.moveTo(nx-.04,hy+.1);c.lineTo(nx+.04,hy+.1);c.quadraticCurveTo(nx+.042,hy+.175,nx,hy+.175);c.quadraticCurveTo(nx-.042,hy+.175,nx-.04,hy+.1);c.closePath()};
+ mp();c.fillStyle='#5a221c';c.fill();c.save();c.clip();dot(nx,hy+.18,.04,'#ff8597');c.restore();mp();c.strokeStyle=K;c.lineWidth=.022;c.lineJoin='round';c.stroke();
+ c.restore()};
 const PUP={white:{fur:'#ffffff',shade:'#f1ece4',fluffy:1},yellow:{fur:'#ecca92',shade:'#c99a62',collar:1},baby:{fur:'#ffdb7a',shade:'#f2b85a',bow:1}};
-S.puppy=(c,dir,phase,moving,kind='white')=>{const P=PUP[kind]||PUP.white,K='#2a1d16';
+S.puppy=(c,dir,phase,moving,kind='white')=>{if(kind==='white')return S.whitePup(c,dir,phase,moving);const P=PUP[kind]||PUP.white,K='#2a1d16';
  const s=moving?Math.sin(phase):0,sq=Math.abs(s);
  c.save();c.translate(.5,.94);c.scale(1+sq*.07,1-sq*.09);c.translate(0,-sq*.06);c.translate(-.5,-.94);
  const line=(w=.06)=>{c.lineWidth=w;c.strokeStyle=K;c.lineJoin=c.lineCap='round';c.stroke()};
