@@ -56,16 +56,17 @@ S.whitePup=(c,dir,phase,moving)=>{const K='#221813',W=.03,s=moving?Math.sin(phas
  if(side){P(.42+lg,.89,.06,.05,.018);P(.58-lg,.89,.06,.05,.018)}else{P(.4,.89+lg,.065,.05,.018);P(.6,.89-lg,.065,.05,.018)}
  // body + ears + head
  P(.5,.745,.185,.165,.024);
- if(side)P(hx-.13*f,hy-.2,.065,.06,.022);else{P(hx-.19,hy-.17,.07,.065,.02);P(hx+.19,hy-.17,.07,.065,.02)}
  P(hx,hy,.28,.225,.024);
  c.lineJoin='round';
  for(const q of parts){c.beginPath();scallopPath(c,...q);c.lineWidth=W*2;c.strokeStyle=K;c.stroke()}
  for(const q of parts){c.beginPath();scallopPath(c,...q);c.fillStyle='#fff';c.fill()}
+ const ear=(x,rot)=>{c.save();c.translate(x,hy+.04);c.rotate(rot);c.beginPath();scallopPath(c,0,0,.072,.125,.018);c.fillStyle='#fff';c.fill();c.lineWidth=W*.7;c.strokeStyle=K;c.stroke();c.restore()};
+ if(side)ear(hx-.05*f,f*.2);else{ear(hx-.25,.15);ear(hx+.25,-.15)}
  if(!side&&dir!==1)[[-1],[1]].forEach(([q])=>{c.beginPath();c.arc(.5+q*.1,.73,.045,q<0?-.3:Math.PI*.6,q<0?Math.PI*.4:Math.PI+.3);c.strokeStyle=K;c.lineWidth=.022;c.lineCap='round';c.stroke()});
  if(!side&&dir!==1){c.strokeStyle=K;c.lineWidth=.022;c.lineCap='round';c.beginPath();c.moveTo(.5,.87);c.lineTo(.5,.93);c.stroke()}
  if(dir===1){c.restore();return}
  const fx=side?hx+.09*f:hx,dx=side?0:.13,dot=(x,y,r,col)=>{c.beginPath();c.arc(x,y,r,0,7);c.fillStyle=col;c.fill()};
- c.globalAlpha=.75;dot(fx-dx-.06,hy+.08,.038,'#ffb3c0');if(!side)dot(fx+dx+.06,hy+.08,.038,'#ffb3c0');c.globalAlpha=1;
+ c.globalAlpha=.75;dot(fx-dx-.045,hy+.08,.038,'#ffb3c0');if(!side)dot(fx+dx+.045,hy+.08,.038,'#ffb3c0');c.globalAlpha=1;
  if(S.closedEyes){c.strokeStyle=K;c.lineWidth=.028;[fx-dx,side?null:fx+dx].forEach(x=>{if(x==null)return;c.beginPath();c.arc(x,hy+.02,.026,.25,Math.PI-.25);c.stroke()})}
  else{dot(side?fx+.02*f:fx-dx,hy+.025,.019,K);if(!side)dot(fx+dx,hy+.025,.019,K)}
  const nx=side?fx+.11*f:fx;c.beginPath();c.ellipse(nx,hy+.06,.026,.018,0,0,7);c.fillStyle=K;c.fill();
