@@ -7,4 +7,4 @@ const LocalStore={
   save(state){localStorage.setItem(this.key,JSON.stringify(state))},
   subscribe(cb){window.addEventListener('storage',e=>{if(e.key===this.key)cb(this.load())})}
 };
-window.Store=LocalStore;
+window.Store=LocalStore;window.LocalStore=LocalStore;

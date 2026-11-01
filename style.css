@@ -64,3 +64,15 @@ li.done .chk{background:#7cc96b;border-color:#5aa84a}
 #house.room .emptyRoom{display:block}#house.room .food{display:none}
 #info{position:absolute;top:calc(env(safe-area-inset-top) + 50px);right:8px;z-index:5;background:rgba(255,248,231,.93);border:2px solid #6b4a32;border-radius:14px;padding:5px 9px;font-size:12px;line-height:1.55;color:#7a4b1d;box-shadow:0 2px 0 #6b4a32;font-variant-numeric:tabular-nums;max-width:62vw}
 #info b{color:#e8743b;font-weight:900}#info.mini{padding:3px 8px}
+
+#net{pointer-events:none;background:rgba(255,248,231,.92);color:#7a4b1d;border:2px solid #6b4a32;border-radius:12px;padding:2px 8px;font-size:12px;font-weight:700;margin-right:6px;white-space:nowrap}
+#net:empty{display:none}
+#gate{position:fixed;inset:0;z-index:40;background:#9fd6e0;display:flex;align-items:center;justify-content:center}
+#gate .card{background:#fff8e7;border:3px solid #6b4a32;border-radius:22px;padding:22px;width:290px;text-align:center;color:#7a4b1d}
+#gate .big{font-size:48px}#gate p{margin:8px 0}#gate .err{color:#d9534f;min-height:18px;font-size:14px}
+#gate input{width:100%;font-size:22px;text-align:center;letter-spacing:4px;padding:10px;border:2px solid #6b4a32;border-radius:14px;margin:6px 0;user-select:text;-webkit-user-select:text}
+#gate button{border:0;background:#ffb347;color:#fff;font-weight:800;border-radius:14px;padding:10px 32px;font-size:16px;box-shadow:0 3px 0 #d9822b}
+#gate button.link{background:none;box-shadow:none;color:#3a8fb5;font-size:14px;padding:6px}
+#who{display:none;margin:10px 0;font-weight:800}#logout{display:none;border:0;background:#eee;color:#7a4b1d;border-radius:12px;padding:6px 16px;margin:0 6px 8px;font-weight:700}
+body.online #who{display:block}body.online #logout{display:inline-block}body.online #menu .pups{display:none}
+body.online #menu .card>b{display:none}#title{white-space:nowrap;font-size:15px}

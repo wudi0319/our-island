@@ -134,6 +134,7 @@ function draw(){frame++;const p=state.player;
    else if(o==='tree'){ctx.save();ctx.translate((x-.15)*T,(y-.6)*T);ctx.scale(T*1.3,T*1.6);S.tree(ctx);ctx.restore()}
    else if(o)sprite(S[o],x,y)}
   if(window.babyDraw&&!baby.carried&&y===Math.floor(baby.y))babyDraw();
+  window.drawOthers&&drawOthers(y);
   if(y===py){ctx.save();ctx.translate((p.x-.7)*T,(p.y-1.2)*T);ctx.scale(T*1.4,T*1.4);S.puppy(ctx,p.dir,phase,moving,charKind);ctx.restore();if(typeof baby!=='undefined'&&baby.carried)babyDraw()}}
  }
 let last=performance.now();
@@ -188,4 +189,4 @@ menu.querySelectorAll('[data-char]').forEach(b=>{const c=b.querySelector('canvas
 document.getElementById('menuClose').onclick=()=>menu.classList.add('hidden');setChar(charKind);
 addEventListener('resize',resize);addEventListener('pagehide',save);document.addEventListener('visibilitychange',()=>document.hidden&&save());
 resize();renderInv();tick();setInterval(tick,1000);requestAnimationFrame(loop);
-window.Game={get state(){return state},set state(s){state=s;save();renderInv()},act,front,get baby(){return baby},openSign,openBuilding,setChar,setTool:k=>tb.querySelector(`[data-tool=${k}]`).click()}; // hooks for sync/tests
+window.Game={get state(){return state},get moving(){return moving},refresh(){rebuildOcc();renderInv();if(!houseEl.classList.contains('hidden')&&houseA!=null&&state.obj[houseA]==='canteen')renderList()},set state(s){state=s;save();renderInv()},act,front,get baby(){return baby},openSign,openBuilding,setChar,setTool:k=>tb.querySelector(`[data-tool=${k}]`).click()}; // hooks for sync/tests
