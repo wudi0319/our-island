@@ -125,8 +125,8 @@ function draw(){frame++;const p=state.player;
    else if(o==='house'){ctx.save();ctx.translate((x-1.6)*T,(y-2.99)*T);ctx.scale(T*4.2,T*4.2);S.house(ctx);ctx.restore();drawSign(x,y,state.names[i]||'我们的家')}
    else if(o==='tree'){ctx.save();ctx.translate((x-.15)*T,(y-.6)*T);ctx.scale(T*1.3,T*1.6);S.tree(ctx);ctx.restore()}
    else if(o)sprite(S[o],x,y)}
-  if(window.babyDraw&&y===Math.floor(baby.y))babyDraw();
-  if(y===py){ctx.save();ctx.translate((p.x-.7)*T,(p.y-1.2)*T);ctx.scale(T*1.4,T*1.4);S.puppy(ctx,p.dir,phase,moving,charKind);ctx.restore()}}
+  if(window.babyDraw&&!baby.carried&&y===Math.floor(baby.y))babyDraw();
+  if(y===py){ctx.save();ctx.translate((p.x-.7)*T,(p.y-1.2)*T);ctx.scale(T*1.4,T*1.4);S.puppy(ctx,p.dir,phase,moving,charKind);ctx.restore();if(typeof baby!=='undefined'&&baby.carried)babyDraw()}}
  }
 let last=performance.now();
 function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);window.babyUpdate&&babyUpdate(dt);draw();if(dirty&&now-lastSave>2000){lastSave=now;save()}requestAnimationFrame(loop)}

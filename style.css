@@ -57,3 +57,5 @@ li.done .chk{background:#7cc96b;border-color:#5aa84a}
 #wishForm .row{display:flex;gap:10px;justify-content:flex-end}#wishForm .row button{border:0;border-radius:12px;padding:8px 20px;font-size:15px;font-weight:800}
 #formCancel{background:#f0d6ae;color:#7a4b1d}#wishForm button[type=submit]{background:#ffb347;color:#fff;box-shadow:0 3px 0 #d9822b}
 #toast{z-index:30}
+#grab{position:absolute;right:16px;bottom:128px;z-index:4;border:3px solid #fff;background:#ffd23f;color:#7a4b1d;font-weight:900;font-size:15px;border-radius:20px;padding:9px 14px;box-shadow:0 4px 0 #e0a020}
+#grab:active{transform:translateY(3px);box-shadow:0 1px 0 #e0a020}
