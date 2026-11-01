@@ -40,36 +40,36 @@ S.player=(c,dir,phase,moving)=>{const b=moving?Math.sin(phase)*.04:0,l=moving?Ma
  if(dir!==1){const ox=dir===2?-.08:dir===3?.08:0;circ(c,.42+ox,.36+b,.03,'#3a2a1a',false);circ(c,.58+ox,.36+b,.03,'#3a2a1a',false);circ(c,.36+ox,.42+b,.035,'#ffaaaa',false);circ(c,.64+ox,.42+b,.035,'#ffaaaa',false)}};
 window.S=S;window.rr=rr;window.circ=circ;
 // Original "line-puppy style" pup: round fluffy body, bold black hand-drawn outline.
-const PUP={white:{fur:'#ffffff',shade:'#f1ece4',fluffy:1},yellow:{fur:'#f6dfb4',shade:'#e9c48e',collar:1},baby:{fur:'#ffdb7a',shade:'#f2b85a',bow:1}};
+const PUP={white:{fur:'#ffffff',shade:'#f1ece4',fluffy:1},yellow:{fur:'#ecca92',shade:'#c99a62',collar:1},baby:{fur:'#ffdb7a',shade:'#f2b85a',bow:1}};
 S.puppy=(c,dir,phase,moving,kind='white')=>{const P=PUP[kind]||PUP.white,K='#2a1d16';
  const s=moving?Math.sin(phase):0,sq=Math.abs(s);
  c.save();c.translate(.5,.94);c.scale(1+sq*.07,1-sq*.09);c.translate(0,-sq*.06);c.translate(-.5,-.94);
  const line=(w=.06)=>{c.lineWidth=w;c.strokeStyle=K;c.lineJoin=c.lineCap='round';c.stroke()};
  const ell=(x,y,rx,ry,fill,w,rot=0)=>{c.beginPath();c.ellipse(x,y,rx,ry,rot,0,7);c.fillStyle=fill;c.fill();if(w!==0)line(w)};
  // fluffy blob: scalloped outline
- const fluff=(x,y,rx,ry,fill,n=11,w=.06)=>{c.beginPath();for(let i=0;i<n;i++){const a0=i/n*Math.PI*2,a1=(i+1)/n*Math.PI*2,am=(a0+a1)/2;
-   const p0=[x+Math.cos(a0)*rx,y+Math.sin(a0)*ry],p1=[x+Math.cos(a1)*rx,y+Math.sin(a1)*ry],pm=[x+Math.cos(am)*rx*1.13,y+Math.sin(am)*ry*1.13];
+ const fluff=(x,y,rx,ry,fill,n=11,w=.065)=>{c.beginPath();for(let i=0;i<n;i++){const a0=i/n*Math.PI*2,a1=(i+1)/n*Math.PI*2,am=(a0+a1)/2;
+   const p0=[x+Math.cos(a0)*rx,y+Math.sin(a0)*ry],p1=[x+Math.cos(a1)*rx,y+Math.sin(a1)*ry],pm=[x+Math.cos(am)*rx*1.09,y+Math.sin(am)*ry*1.09];
    if(i===0)c.moveTo(...p0);c.quadraticCurveTo(pm[0],pm[1],p1[0],p1[1])}c.closePath();c.fillStyle=fill;c.fill();line(w)};
- const blob=(x,y,rx,ry,fill,w)=>P.fluffy?fluff(x,y,rx,ry,fill,11,w):ell(x,y,rx,ry,fill,w);
+ const blob=(x,y,rx,ry,fill,w)=>P.fluffy?fluff(x,y,rx*1.04,ry*1.04,fill,Math.round(rx*72),w):ell(x,y,rx,ry,fill,w);
  c.beginPath();c.ellipse(.5,.95,.26,.05,0,0,7);c.fillStyle='rgba(90,60,30,.22)';c.fill();
  const side=dir>=2,f=dir===2?-1:1;
- if(dir===1)ell(.5,.68,.06,.05,P.fur);else if(side)ell(.5-.25*f,.66,.065,.045,P.fur,.055,f*-.6);
+ if(P.fluffy&&dir!==1&&!side)fluff(.64,.7,.06,.05,P.fur,7);if(dir===1)(P.fluffy?fluff(.5,.68,.07,.06,P.fur,7):ell(.5,.68,.06,.05,P.fur));else if(side)ell(.5-.25*f,.66,.065,.045,P.fur,.055,f*-.6);
  const lg=moving?s*.03:0;
  if(side){ell(.5-.12*f+lg,.9,.06,.05,P.fur);ell(.5+.1*f-lg,.9,.06,.05,P.fur)}else{ell(.41,.9+lg,.065,.05,P.fur);ell(.59,.9-lg,.065,.05,P.fur)}
  blob(.5,.73,.2,.17,P.fur);
  const hx=side?.5+.06*f:.5,hy=.42;
- if(P.collar&&dir!==1){c.beginPath();c.ellipse(hx,hy+.2,.15,.045,0,0,Math.PI);line(.11);c.strokeStyle='#e0574f';c.lineWidth=.06;c.stroke();ell(hx+(side?.06*f:0),hy+.26,.03,.03,'#ffd36b',.035)}
+ if(P.collar&&dir!==1){c.beginPath();c.ellipse(hx,hy+.2,.15,.045,0,0,Math.PI);line(.08);c.strokeStyle='#e0574f';c.lineWidth=.04;c.stroke();ell(hx+(side?.06*f:0),hy+.26,.03,.03,'#ffd36b',.035)}
  blob(hx,hy,.25,.215,P.fur);
  // ears: white = small round, yellow/baby = floppy
- const ear=(ex,rot)=>P.fluffy?ell(ex,hy-.17,.06,.055,P.fur,.055,rot):ell(ex,hy-.02,.07,.13,P.shade,.055,rot);
- if(side)ear(hx-.12*f,f*.5);else{ear(hx-(P.fluffy?.15:.24),.3);ear(hx+(P.fluffy?.15:.24),-.3)}
+ const ear=(ex,rot)=>P.fluffy?fluff(ex,hy-.19,.09,.08,P.fur,7,.045):ell(ex,hy+(P.collar?.03:-.02),P.collar?.085:.07,P.collar?.16:.13,P.shade,.06,rot);
+ if(side)ear(hx-.12*f,f*.5);else{ear(hx-(P.fluffy?.16:.25),P.collar?.15:.3);ear(hx+(P.fluffy?.16:.25),P.collar?-.15:-.3)}
  if(P.bow){ell(hx+.08,hy-.2,.045,.03,'#ff8fa3',.035,.5);ell(hx+.15,hy-.2,.045,.03,'#ff8fa3',.035,-.5);ell(hx+.115,hy-.2,.02,.02,'#ff6b86',.03)}
  if(dir===1){c.restore();return}
  const fx=side?hx+.1*f:hx;
  if(S.closedEyes){const ce=ex=>{c.beginPath();c.arc(ex,hy+.01,.03,.2,Math.PI-.2);line(.035)};ce(fx-(side?0:.1));if(!side)ce(fx+.1)}
- else{ell(fx-(side?0:.1),hy+.02,.025,.03,K,0);if(!side)ell(fx+.1,hy+.02,.025,.03,K,0)}
+ else{const er=P.baby?.025:.019;ell(fx-(side?0:.1),hy+.02,er,er*1.15,K,0);if(!side)ell(fx+.1,hy+.02,er,er*1.15,K,0)}
  const nx=side?fx+.1*f:fx;ell(nx,hy+.08,.032,.022,K,0);
- c.beginPath();c.moveTo(nx-.04,hy+.12);c.quadraticCurveTo(nx-.02,hy+.15,nx,hy+.12);c.quadraticCurveTo(nx+.02,hy+.15,nx+.04,hy+.12);line(.035);
+ if((P.fluffy||P.collar)&&!S.closedEyes){c.beginPath();c.moveTo(nx-.055,hy+.11);c.quadraticCurveTo(nx,hy+.21,nx+.055,hy+.11);c.closePath();c.fillStyle='#5a2a24';c.fill();line(.035);ell(nx,hy+.155,.025,.018,'#ff8a9a',0)}else{c.beginPath();c.moveTo(nx-.04,hy+.12);c.quadraticCurveTo(nx-.02,hy+.15,nx,hy+.12);c.quadraticCurveTo(nx+.02,hy+.15,nx+.04,hy+.12);line(.035)}
  if(side)ell(fx-.03*f,hy+.1,.045,.028,'#ff9eae',0);else{ell(fx-.16,hy+.09,.05,.03,'#ff9eae',0);ell(fx+.16,hy+.09,.05,.03,'#ff9eae',0)}
  c.restore()};
 
