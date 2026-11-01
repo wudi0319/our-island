@@ -57,7 +57,7 @@ S.whitePup=(c,dir,phase,moving)=>{const K='#221813',W=.03,s=moving?Math.sin(phas
  // body + ears + head
  P(.5,.745,.185,.165,.024);
  P(hx,hy,.28,.225,.024);
- if(side)P(hx-.24*f,hy+.1,.07,.12,.018);else{P(hx-.25,hy+.07,.07,.12,.018);P(hx+.25,hy+.07,.07,.12,.018)}
+ if(side)P(hx-.27*f,hy+.12,.075,.14,.018);else{P(hx-.285,hy+.12,.08,.14,.018);P(hx+.285,hy+.12,.08,.14,.018)}
  c.lineJoin='round';
  for(const q of parts){c.beginPath();scallopPath(c,...q);c.lineWidth=W*2;c.strokeStyle=K;c.stroke()}
  for(const q of parts){c.beginPath();scallopPath(c,...q);c.fillStyle='#fff';c.fill()}
