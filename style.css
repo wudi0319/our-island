@@ -1,18 +1,22 @@
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-html,body{margin:0;height:100%;background:#6cc3e8;font-family:-apple-system,"PingFang SC",sans-serif;overflow:hidden;touch-action:manipulation}
-body{display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-#top{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;color:#fff;text-shadow:0 1px 0 #2a7fa3}
-#title{font-weight:800;font-size:18px}
-#inv{font-size:14px;background:rgba(0,0,0,.18);border-radius:12px;padding:4px 10px}
-main{flex:1;display:flex;align-items:center;justify-content:center;position:relative;min-height:0}
-canvas{image-rendering:pixelated;touch-action:none}
-#toast{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:#fff8e7;color:#7a4b1d;border:2px solid #c48a4a;border-radius:12px;padding:6px 12px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+html,body{margin:0;height:100%;background:#5cc8ea;font-family:-apple-system,"PingFang SC",sans-serif;overflow:hidden;touch-action:none}
+body{display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);background:#fff8e7}
+#top{position:absolute;top:env(safe-area-inset-top);left:0;right:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;pointer-events:none}
+#title{font-weight:900;font-size:17px;color:#fff;text-shadow:0 2px 0 #3a8fb5,0 0 6px rgba(0,0,0,.2)}
+#inv{font-size:13px;background:rgba(255,248,231,.92);color:#7a4b1d;border:2px solid #e0a96d;border-radius:14px;padding:3px 10px;font-weight:700}
+main{flex:1;position:relative;min-height:0;overflow:hidden;background:#5cc8ea}
+canvas#map{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#toast{position:absolute;top:56px;left:50%;transform:translateX(-50%);background:#fff8e7;color:#7a4b1d;border:2px solid #e0a96d;border-radius:14px;padding:6px 14px;font-size:14px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;z-index:6}
 #toast.show{opacity:1}
-#toolbar{display:flex;gap:4px;overflow-x:auto;padding:8px;background:#fff8e7;border-top:3px solid #c48a4a}
-.tool{flex:0 0 auto;width:58px;border:2px solid #e3c79c;border-radius:12px;background:#fff;padding:4px 0;text-align:center;font-size:11px;color:#7a4b1d}
-.tool canvas{width:32px;height:32px;display:block;margin:0 auto 2px}
-.tool.on{border-color:#e8743b;background:#ffe4cc}
-#seeds{padding:6px 8px;background:#fff1d6;display:flex;gap:6px;justify-content:center}
-#seeds button{border:2px solid #c48a4a;background:#fff8e7;border-radius:10px;padding:6px 10px;font-size:13px;color:#7a4b1d}
-#seeds button.on{background:#ffd9b0}
+#joy{position:absolute;left:18px;bottom:18px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.35);border:3px solid rgba(255,255,255,.7);touch-action:none;z-index:4}
+#knob{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:#fff8e7;border:3px solid #e0a96d;box-shadow:0 3px 0 #c48a4a;pointer-events:none}
+#act{position:absolute;right:20px;bottom:30px;width:84px;height:84px;border-radius:50%;background:#ffb347;border:4px solid #fff;color:#fff;font-size:22px;font-weight:900;box-shadow:0 4px 0 #d9822b;z-index:4;text-shadow:0 2px 0 #d9822b}
+#act:active{transform:translateY(3px);box-shadow:0 1px 0 #d9822b}
+#toolbar{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:6px 6px 8px;background:#fff8e7;border-top:3px solid #e0a96d}
+.tool{border:2px solid #f0d6ae;border-radius:12px;background:#fff;padding:3px 0 2px;text-align:center;font-size:11px;font-weight:700;color:#7a4b1d}
+.tool canvas{width:30px;height:30px;display:block;margin:0 auto}
+.tool.on{border-color:#ff8c42;background:#ffe4cc}
+#seeds{display:flex;gap:6px;justify-content:center;padding:6px;background:#fff1d6;border-top:2px solid #f0d6ae}
+#seeds button{border:2px solid #e0a96d;background:#fff8e7;border-radius:12px;padding:5px 10px;font-size:13px;font-weight:700;color:#7a4b1d}
+#seeds button.on{background:#ffd9b0;border-color:#ff8c42}
 .hidden{display:none!important}
