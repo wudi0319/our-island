@@ -23,6 +23,9 @@ function genWorld(seed){const r=rng(seed),ter=new Array(W*H),obj={};
 function newState(){const seed=20261101,{ter,obj}=genWorld(seed);
  return{v:2,seed,w:W,h:H,ter,obj,crops:{},inv:{carrot:0,tomato:0,strawberry:0,wood:0},player:{x:W/2+.5,y:H/2+.5,dir:0},updatedAt:Date.now()}}
 function loadState(){const s=Store.load();if(s&&s.v===2&&s.ter&&s.ter.length===W*H)return s;Store.clearOld&&Store.clearOld();return newState()}
+// character choice is per-device (each phone picks its own pup)
+let charKind=localStorage.getItem('our-island-char')||'white';
+function setChar(k){charKind=k;localStorage.setItem('our-island-char',k);document.querySelectorAll('#menu [data-char]').forEach(b=>b.classList.toggle('on',b.dataset.char===k))}
 let state=loadState(),tool='hoe',seed='carrot',dirty=false,lastSave=0;
 const save=()=>{state.updatedAt=Date.now();Store.save(state);dirty=false};
 Store.subscribe(s=>{if(s&&s.v===2)state=s});
@@ -106,7 +109,7 @@ function draw(){frame++;const p=state.player;
    else if(o==='house'){ctx.save();ctx.translate((x-.5)*T,(y-1)*T);ctx.scale(T*2,T*2);S.house(ctx);ctx.restore()}
    else if(o==='tree'){ctx.save();ctx.translate((x-.15)*T,(y-.6)*T);ctx.scale(T*1.3,T*1.6);S.tree(ctx);ctx.restore()}
    else if(o)sprite(S[o],x,y)}
-  if(y===py){ctx.save();ctx.translate((p.x-.5)*T,(p.y-.8)*T);ctx.scale(T,T*1.1);S.player(ctx,p.dir,phase,moving);ctx.restore()}}
+  if(y===py){ctx.save();ctx.translate((p.x-.7)*T,(p.y-1.2)*T);ctx.scale(T*1.4,T*1.4);S.puppy(ctx,p.dir,phase,moving,charKind);ctx.restore()}}
  }
 let last=performance.now();
 function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();if(dirty&&now-lastSave>2000){lastSave=now;save()}requestAnimationFrame(loop)}
@@ -118,6 +121,9 @@ TOOLS.forEach(([k,l,ic])=>{const b=document.createElement('button');b.className=
  b.onclick=()=>{tool=k;[...tb.children].forEach(x=>x.classList.toggle('on',x===b));seedsEl.classList.toggle('hidden',k!=='seed');resize()};tb.append(b)});
 Object.entries(CROPS).forEach(([k,c])=>{const b=document.createElement('button');b.textContent=c.name+'种子';b.dataset.seed=k;if(k===seed)b.className='on';b.onclick=()=>{seed=k;[...seedsEl.children].forEach(x=>x.classList.toggle('on',x===b))};seedsEl.append(b)});
 function renderInv(){const v=state.inv;document.getElementById('inv').textContent=`🥕${v.carrot} 🍅${v.tomato} 🍓${v.strawberry} 🪵${v.wood||0}`}
+const menu=document.getElementById('menu');document.getElementById('gear').onclick=()=>menu.classList.toggle('hidden');
+menu.querySelectorAll('[data-char]').forEach(b=>{const c=b.querySelector('canvas'),g=c.getContext('2d');g.scale(c.width,c.height);S.puppy(g,0,0,false,b.dataset.char);b.onclick=()=>{setChar(b.dataset.char);toast('换成'+b.textContent+'啦')}});
+document.getElementById('menuClose').onclick=()=>menu.classList.add('hidden');setChar(charKind);
 addEventListener('resize',resize);addEventListener('pagehide',save);document.addEventListener('visibilitychange',()=>document.hidden&&save());
 resize();renderInv();tick();setInterval(tick,1000);requestAnimationFrame(loop);
-window.Game={get state(){return state},set state(s){state=s;save();renderInv()},act,front,setTool:k=>tb.querySelector(`[data-tool=${k}]`).click()}; // hooks for sync/tests
+window.Game={get state(){return state},set state(s){state=s;save();renderInv()},act,front,setChar,setTool:k=>tb.querySelector(`[data-tool=${k}]`).click()}; // hooks for sync/tests

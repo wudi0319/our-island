@@ -39,3 +39,34 @@ S.player=(c,dir,phase,moving)=>{const b=moving?Math.sin(phase)*.04:0,l=moving?Ma
  c.beginPath();c.arc(.5,.28+b,.25,Math.PI,0);c.fillStyle='#6b4226';c.fill();c.lineWidth=.045;c.strokeStyle=OL;c.stroke();
  if(dir!==1){const ox=dir===2?-.08:dir===3?.08:0;circ(c,.42+ox,.36+b,.03,'#3a2a1a',false);circ(c,.58+ox,.36+b,.03,'#3a2a1a',false);circ(c,.36+ox,.42+b,.035,'#ffaaaa',false);circ(c,.64+ox,.42+b,.035,'#ffaaaa',false)}};
 window.S=S;window.rr=rr;window.circ=circ;
+// Original "line-puppy style" pup: round fluffy body, bold black hand-drawn outline.
+const PUP={white:{fur:'#ffffff',shade:'#eceae6'},yellow:{fur:'#ffe9b0',shade:'#f5d68c'}};
+S.puppy=(c,dir,phase,moving,kind='white')=>{const P=PUP[kind]||PUP.white,K='#1e1a18';
+ const s=moving?Math.sin(phase):0,sq=Math.abs(s);
+ c.save();c.translate(.5,.94);c.scale(1+sq*.07,1-sq*.09);c.translate(0,-sq*.06);c.translate(-.5,-.94);
+ const line=(w=.04)=>{c.lineWidth=w;c.strokeStyle=K;c.lineJoin=c.lineCap='round';c.stroke()};
+ const ell=(x,y,rx,ry,fill,w,rot=0)=>{c.beginPath();c.ellipse(x,y,rx,ry,rot,0,7);c.fillStyle=fill;c.fill();if(w!==0)line(w)};
+ c.beginPath();c.ellipse(.5,.95,.26,.05,0,0,7);c.fillStyle='rgba(60,40,20,.18)';c.fill();
+ const side=dir>=2,f=dir===2?-1:1;
+ // tail
+ if(dir===1)ell(.5,.66,.06,.05,P.fur);else if(side){ell(.5-.25*f,.66,.06,.045,P.fur,.055,f*-.6)}
+ // body
+ ell(.5,.73,.2,.17,P.fur);
+ // stubby legs
+ const lg=moving?s*.03:0;
+ if(side){ell(.5-.12*f+lg,.9,.055,.045,P.fur,.035);ell(.5+.1*f-lg,.9,.055,.045,P.fur,.035)}
+ else{ell(.41,.9+lg,.06,.045,P.fur,.035);ell(.59,.9-lg,.06,.045,P.fur,.035)}
+ // head
+ const hx=side?.5+.06*f:.5,hy=.42;
+ ell(hx,hy,.25,.215,P.fur);
+ // floppy ears
+ const ear=(ex,rot)=>ell(ex,hy-.0,.065,.12,P.shade,.035,rot);
+ if(side)ear(hx-.12*f,f*.5);else{ear(hx-.25,.3);ear(hx+.25,-.3)}
+ if(dir===1){c.restore();return}
+ // face
+ const fx=side?hx+.1*f:hx;
+ ell(fx-(side?.0:.1),hy+.02,.022,.026,K,0);if(!side)ell(fx+.1,hy+.02,.022,.026,K,0);
+ ell(side?fx+.1*f:fx,hy+.08,.03,.02,K,0);
+ c.beginPath();c.moveTo((side?fx+.1*f:fx)-.03,hy+.13);c.quadraticCurveTo(side?fx+.1*f:fx,hy+.16,(side?fx+.1*f:fx)+.03,hy+.13);line(.03);
+ c.globalAlpha=.7;if(side)ell(fx-.03*f,hy+.1,.04,.024,'#ffa3b5',0);else{ell(fx-.16,hy+.09,.045,.026,'#ffa3b5',0);ell(fx+.16,hy+.09,.045,.026,'#ffa3b5',0)}c.globalAlpha=1;
+ c.restore()};

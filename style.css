@@ -20,3 +20,12 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
 #seeds button{border:2px solid #e0a96d;background:#fff8e7;border-radius:12px;padding:5px 10px;font-size:13px;font-weight:700;color:#7a4b1d}
 #seeds button.on{background:#ffd9b0;border-color:#ff8c42}
 .hidden{display:none!important}
+#right{display:flex;gap:6px;align-items:center}
+#gear{pointer-events:auto;font-size:18px;width:34px;height:34px;border-radius:50%;border:2px solid #e0a96d;background:#fff8e7;padding:0}
+#menu{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center}
+#menu .card{background:#fff8e7;border:3px solid #e0a96d;border-radius:20px;padding:16px;text-align:center;color:#7a4b1d;width:260px}
+.pups{display:flex;gap:10px;justify-content:center;margin:12px 0}
+.pups button{border:3px solid #f0d6ae;border-radius:16px;background:#fff;padding:6px;font-weight:800;color:#7a4b1d;font-size:14px}
+.pups button.on{border-color:#ff8c42;background:#ffe4cc}
+.pups canvas{width:80px;height:80px;display:block}
+#menuClose{border:0;background:#ffb347;color:#fff;font-weight:800;border-radius:14px;padding:8px 28px;font-size:15px;box-shadow:0 3px 0 #d9822b}
