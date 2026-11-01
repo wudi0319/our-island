@@ -125,10 +125,11 @@ function draw(){frame++;const p=state.player;
    else if(o==='house'){ctx.save();ctx.translate((x-1.6)*T,(y-2.99)*T);ctx.scale(T*4.2,T*4.2);S.house(ctx);ctx.restore();drawSign(x,y,state.names[i]||'我们的家')}
    else if(o==='tree'){ctx.save();ctx.translate((x-.15)*T,(y-.6)*T);ctx.scale(T*1.3,T*1.6);S.tree(ctx);ctx.restore()}
    else if(o)sprite(S[o],x,y)}
+  if(window.babyDraw&&y===Math.floor(baby.y))babyDraw();
   if(y===py){ctx.save();ctx.translate((p.x-.7)*T,(p.y-1.2)*T);ctx.scale(T*1.4,T*1.4);S.puppy(ctx,p.dir,phase,moving,charKind);ctx.restore()}}
  }
 let last=performance.now();
-function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();if(dirty&&now-lastSave>2000){lastSave=now;save()}requestAnimationFrame(loop)}
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);window.babyUpdate&&babyUpdate(dt);draw();if(dirty&&now-lastSave>2000){lastSave=now;save()}requestAnimationFrame(loop)}
 
 const plaque=(x,y,name)=>{const w=Math.max(1.1,Math.min(2.4,.3*Array.from(name).length+.45)),h=.5;return{x:x+.5-w/2,y:y-1.98,w,h}};
 function drawSign(x,y,name){const q=plaque(x,y,name),sx=q.x*T,sy=q.y*T,w=q.w*T,h=q.h*T;
@@ -142,7 +143,7 @@ function closeSign(ok){if(ok&&signA!=null){const v=Array.from(signIn.value.trim(
 document.getElementById('signOk').onclick=()=>closeSign(true);document.getElementById('signCancel').onclick=()=>closeSign(false);
 signIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)closeSign(true)});
 cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),p=state.player;let cx=p.x*T-vw/2,cy=p.y*T-vh/2;cx=Math.max(0,Math.min(W*T-vw,cx));cy=Math.max(0,Math.min(H*T-vh,cy));
- const wx=(e.clientX-r.left+cx)/T,wy=(e.clientY-r.top+cy)/T;for(const k in state.obj)if(state.obj[k]==='house'){const x=k%W,y=k/W|0;if(Math.hypot(p.x-(x+.5),p.y-(y-1))>6)continue;
+ const wx=(e.clientX-r.left+cx)/T,wy=(e.clientY-r.top+cy)/T;if(window.babyTap&&babyTap(wx,wy))return;for(const k in state.obj)if(state.obj[k]==='house'){const x=k%W,y=k/W|0;if(Math.hypot(p.x-(x+.5),p.y-(y-1))>6)continue;
   const q=plaque(x,y,state.names[k]||'我们的家');if(wx>=q.x-.1&&wx<=q.x+q.w+.1&&wy>=q.y-.15&&wy<=q.y+q.h+.15)return openSign(+k);
   if(wx>=x-1&&wx<=x+3&&wy>=y-1.4&&wy<=y+1)return openHouse(+k)}});
 // ---- inside the house: food wishlist (stored per house in state.lists, syncs later) ----
@@ -178,4 +179,4 @@ menu.querySelectorAll('[data-char]').forEach(b=>{const c=b.querySelector('canvas
 document.getElementById('menuClose').onclick=()=>menu.classList.add('hidden');setChar(charKind);
 addEventListener('resize',resize);addEventListener('pagehide',save);document.addEventListener('visibilitychange',()=>document.hidden&&save());
 resize();renderInv();tick();setInterval(tick,1000);requestAnimationFrame(loop);
-window.Game={get state(){return state},set state(s){state=s;save();renderInv()},act,front,openSign,openHouse,setChar,setTool:k=>tb.querySelector(`[data-tool=${k}]`).click()}; // hooks for sync/tests
+window.Game={get state(){return state},set state(s){state=s;save();renderInv()},act,front,get baby(){return baby},openSign,openHouse,setChar,setTool:k=>tb.querySelector(`[data-tool=${k}]`).click()}; // hooks for sync/tests
