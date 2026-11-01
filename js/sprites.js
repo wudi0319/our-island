@@ -57,11 +57,10 @@ S.whitePup=(c,dir,phase,moving)=>{const K='#221813',W=.03,s=moving?Math.sin(phas
  // body + ears + head
  P(.5,.745,.185,.165,.024);
  P(hx,hy,.28,.225,.024);
+ if(side)P(hx-.24*f,hy+.1,.07,.12,.018);else{P(hx-.25,hy+.07,.07,.12,.018);P(hx+.25,hy+.07,.07,.12,.018)}
  c.lineJoin='round';
  for(const q of parts){c.beginPath();scallopPath(c,...q);c.lineWidth=W*2;c.strokeStyle=K;c.stroke()}
  for(const q of parts){c.beginPath();scallopPath(c,...q);c.fillStyle='#fff';c.fill()}
- const ear=(x,rot)=>{c.save();c.translate(x,hy+.04);c.rotate(rot);c.beginPath();scallopPath(c,0,0,.072,.125,.018);c.fillStyle='#fff';c.fill();c.lineWidth=W*.7;c.strokeStyle=K;c.stroke();c.restore()};
- if(side)ear(hx-.05*f,f*.2);else{ear(hx-.25,.15);ear(hx+.25,-.15)}
  if(!side&&dir!==1)[[-1],[1]].forEach(([q])=>{c.beginPath();c.arc(.5+q*.1,.73,.045,q<0?-.3:Math.PI*.6,q<0?Math.PI*.4:Math.PI+.3);c.strokeStyle=K;c.lineWidth=.022;c.lineCap='round';c.stroke()});
  if(!side&&dir!==1){c.strokeStyle=K;c.lineWidth=.022;c.lineCap='round';c.beginPath();c.moveTo(.5,.87);c.lineTo(.5,.93);c.stroke()}
  if(dir===1){c.restore();return}
