@@ -16,7 +16,7 @@ function babySprint(){const p=state.player;for(let k=0;k<24;k++){const a=Math.at
 const grabBtn=document.getElementById('grab');
 function setGrab(show,txt){if(grabBtn.classList.contains('hidden')===show)grabBtn.classList.toggle('hidden',!show);if(grabBtn.textContent!==txt)grabBtn.textContent=txt}
 grabBtn.addEventListener('pointerdown',e=>{e.preventDefault();baby.carried?babyDrop():babyGrab()});
-function carryLine(){return Math.random()<.4?pick(BABY_SAY[(localStorage.getItem('our-island-char')||'white')==='yellow'?'mom':'dad']):pick(BABY_SAY.carry)}
+function carryLine(){return Math.random()<.4?pick(BABY_SAY[(localStorage.getItem('our-island-char')||'yellow')==='yellow'?'dad':'mom']):pick(BABY_SAY.carry)}
 function babyGrab(){baby.carried=true;baby.mode='carry';baby.nextBub=1.5;say(carryLine())}
 function babyDrop(){const p=state.player,d=[[0,1],[0,-1],[-1,0],[1,0]][p.dir];const c=[d,[0,1],[1,0],[-1,0],[0,-1]];
  for(const[dx,dy]of c){const x=Math.floor(p.x)+dx+.5,y=Math.floor(p.y)+dy+.5;if(babyFree(x,y)){baby.x=x;baby.y=y;baby.carried=false;if(Math.random()<.5&&babySprint())return;babyMode('hop',1.2);say(pick(['胖宝自由啦～','胖宝落地啦','胖宝开心地蹦了蹦','胖宝站稳啦']));return}}toast('这里放不下胖宝')}

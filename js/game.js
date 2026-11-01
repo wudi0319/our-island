@@ -24,7 +24,7 @@ function newState(){const seed=20261101,{ter,obj}=genWorld(seed);
  return{v:2,seed,w:W,h:H,ter,obj,crops:{},inv:{carrot:0,tomato:0,strawberry:0,wood:0},player:{x:W/2+.5,y:H/2+.5,dir:0},updatedAt:Date.now()}}
 function loadState(){const s=Store.load();if(s&&s.v===2&&s.ter&&s.ter.length===W*H)return s;Store.clearOld&&Store.clearOld();return newState()}
 // character choice is per-device (each phone picks its own pup)
-let charKind=localStorage.getItem('our-island-char')||'white';
+let charKind=localStorage.getItem('our-island-char')||'yellow';
 function setChar(k){charKind=k;localStorage.setItem('our-island-char',k);document.querySelectorAll('#menu [data-char]').forEach(b=>b.classList.toggle('on',b.dataset.char===k))}
 let state=loadState(),tool='hoe',seed='carrot',dirty=false,lastSave=0;
 // ---- big houses: obj 'house' sits on the door tile (bottom row), footprint x-1..x+2, y-3..y (4x4) ----
