@@ -1,6 +1,6 @@
 // Online mode: password login -> role, shared island in Supabase (RPC only), live dogs via Realtime.
 (()=>{
-const SB_URL='https://our-island-proxy.our-island-s4d4b.workers.dev',SB_KEY='sb_publishable_DqsCbDSeAxe26HP8XWFPIw_nCulbx0z';
+const SB_URL='https://api.pangzaixiaodao.party',SB_KEY='sb_publishable_DqsCbDSeAxe26HP8XWFPIw_nCulbx0z';
 const K_AUTH='our-island-auth',K_BAK='our-island-backup',K_BASE='our-island-cloud-base';
 const ROLES={jimao:{name:'鸡毛',char:'yellow'},xiaobai:{name:'小白',char:'white'}};
 const GAME=['js/sprites.js','js/game.js','js/baby.js','js/info.js'],VER='20';
