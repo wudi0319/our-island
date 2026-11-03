@@ -76,3 +76,4 @@ li.done .chk{background:#7cc96b;border-color:#5aa84a}
 #who{display:none;margin:10px 0;font-weight:800}#logout{display:none;border:0;background:#eee;color:#7a4b1d;border-radius:12px;padding:6px 16px;margin:0 6px 8px;font-weight:700}
 body.online #who{display:block}body.online #logout{display:inline-block}body.online #menu .pups{display:none}
 body.online #menu .card>b{display:none}#title{white-space:nowrap;font-size:15px}
+#pv{position:absolute;left:50%;bottom:130px;transform:translateX(-50%);display:flex;gap:28px;z-index:5}#pv.hidden{display:none}#pv button{width:68px;height:68px;border-radius:50%;border:4px solid #fff;font-size:30px;font-weight:900;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.2)}#pvOk{background:#4cc36b}#pvNo{background:#f06464}
