@@ -39,7 +39,7 @@ function startEvent(k,force){state.intr=state.intr||{};
  state.intr[id]={k,x:+x.toFixed(2),y:+y.toFixed(2),ph:'in',at:Date.now(),fear:{},fdec:0,scared:{},loot:{},carry:null};
  alertBanner(INTR[k].alert);save();return id}
 function maybeEvent(){const K='our-island-lastseen',now=Date.now(),last=+localStorage.getItem(K)||0;localStorage.setItem(K,now);
- if(now-last>EV_AWAY_MS&&Math.random()<EV_CHANCE)setTimeout(()=>startEvent(),4000)}
+ if(now-last>EV_AWAY_MS&&Math.random()<EV_CHANCE)setTimeout(()=>{if(iHost())startEvent()},6000)} // only the simulating phone starts events; startEvent re-checks active + daily cap after sync
 setInterval(()=>{if(!document.hidden)localStorage.setItem('our-island-lastseen',Date.now())},30e3);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)maybeEvent()});
 const alertEl=document.getElementById('alert');let alertT;
@@ -68,7 +68,7 @@ function intrUpdate(dt){const A=state.intr;if(!A)return;const now=Date.now();
   // any phone: fear full / cry => flee
   if(e.ph!=='flee'&&(fearOf(e)>=FEAR_NEED[e.k]||Object.keys(e.scared||{}).length))scare(id,e,Object.keys(e.scared||{}).length?'cry':'bark');
   const l=IL[id]||(IL[id]={x:e.x,y:e.y,ph:0});l.ph+=dt*12;l.cover=Math.max(0,(l.cover||0)-dt);
-  if(!iHost()){l.x+=(e.x-l.x)*Math.min(1,dt*4);l.y+=(e.y-l.y)*Math.min(1,dt*4);l.dir=e.dir;continue}
+  if(!iHost()){const rs=window.SimIn&&SimIn.i[id],fr=rs&&performance.now()-rs.t<4000,tx=fr?rs.v[0]:e.x,ty=fr?rs.v[1]:e.y,k=1-Math.exp(-dt*6);l.x+=(tx-l.x)*k;l.y+=(ty-l.y)*k;l.dir=fr?rs.v[2]:e.dir;if(fr)e.ph2=rs.v[3]||null;continue}
   if(now-lastBark>FEAR_IDLE_S*1e3&&fearOf(e)>0)e.fdec=+((e.fdec||0)+FEAR_DECAY*dt).toFixed(2);
   const carrying=e.carry||sum(e.loot)>0;
   if(e.ph==='flee'){goTo(e,e.fx,e.fy,FLEE_SPEED,dt);if(offIsland(e)||Math.hypot(e.x-state.player.x,e.y-state.player.y)>16)finish(id,e)}
