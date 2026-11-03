@@ -56,7 +56,7 @@ const ter=(x,y)=>inb(x,y)?state.ter[idx(x,y)]:WATER;
 const blocked=(x,y)=>{if(!inb(x,y))return true;const i=idx(x,y);return state.ter[i]===WATER||SOLID[state.obj[i]]||occ[i]!=null||state.obj[i]==='gate'&&!gateNear(i)};
 // gates open when any dog (me or the other online pup) is within ~1.5 tiles
 function dogs(){const L=[state.player],o=window.Sync&&Sync.others;if(o)for(const k in o){const d=o[k];if(d.here&&d.x!=null&&Date.now()-d.t<20000)L.push(d)}return L}
-function gateNear(i){const x=i%W+.5,y=(i/W|0)+.5;return dogs().some(d=>Math.hypot(d.x-x,d.y-y)<1.6)}
+function gateNear(i){const x=i%W+.5,y=(i/W|0)+.5;return dogs().some(d=>Math.hypot(d.x-x,d.y-y)<1.6)||!!(window.gateDriven&&gateDriven(i))}
 function gatesUpdate(dt){for(const i of gates){const t=gateNear(i)?1:0,a=gateAng[i]||0;if(a!==t){gateAng[i]=t>a?Math.min(1,a+dt*5):Math.max(0,a-dt*5);dirty=dirty}}}
 const isFence=(x,y)=>inb(x,y)&&(state.obj[idx(x,y)]==='fence'||state.obj[idx(x,y)]==='gate');
 

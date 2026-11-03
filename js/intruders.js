@@ -50,7 +50,7 @@ function goTo(e,tx,ty,sp,dt,wolf){const dx=tx-e.x,dy=ty-e.y,d=Math.hypot(dx,dy);
  if(wolf){const i=idx(Math.floor(nx),Math.floor(ny)),o=state.obj[i];if(o==='fence'||o==='gate')return{fence:i}}
  e.x=nx;e.y=ny;e.dir=dx<0?2:3;return d}
 function scare(id,e,why){if(e.ph==='flee'||e.ph==='done')return;const back=[];
- if(e.carry){const a=state.animals[e.carry];if(a){a.x=+e.x.toFixed(2);a.y=+e.y.toFixed(2);back.push('救回了'+(a.k==='cow'?'小牛':'小猪'))}e.carry=null}
+ if(e.carry){const a=state.animals[e.carry];if(a){a.x=+e.x.toFixed(2);a.y=+e.y.toFixed(2);back.push('救回了'+(Animals.NAME[a.k]||'小猪'))}e.carry=null}
  const L=e.loot||{};let n=0;for(const k in L){state.inv[k]=(state.inv[k]||0)+L[k];n+=L[k];back.push('追回了'+L[k]+'个'+CROPN[k])}e.loot={};
  e.ph='flee';e.scaredAway=1;const ang=Math.atan2(e.y-state.player.y,e.x-state.player.x);e.fx=e.x+Math.cos(ang)*40;e.fy=e.y+Math.sin(ang)*40;
  if(iHost()){state.inv.wood=(state.inv.wood||0)+1}
@@ -60,7 +60,7 @@ function escape(e){e.ph='escape';const ang=Math.atan2(e.y-H/2,e.x-W/2),cx=Math.c
  e.esp=+Math.max(.06,d/ESCAPE_S).toFixed(3);e.eEnd=Date.now()+ESCAPE_S*1e3}
 const offIsland=e=>!inb(Math.floor(e.x),Math.floor(e.y))||state.ter[idx(Math.floor(e.x),Math.floor(e.y))]===WATER&&Math.hypot(e.x-W/2,e.y-H/2)>22;
 function finish(id,e){e.ph='done';e.done=Date.now();let lost=[];
- if(e.carry){const a=state.animals[e.carry];if(a){a.gone=Date.now();lost.push((a.k==='cow'?'小牛':a.k==='piglet'?'迷你小猪':'小猪')+'被抱走了')}e.took=e.carry;e.carry=null}
+ if(e.carry){const a=state.animals[e.carry];if(a){a.gone=Date.now();lost.push((Animals.NAME[a.k]||'小猪')+'被抱走了')}e.took=e.carry;e.carry=null}
  for(const k in e.loot||{})lost.push(CROPN[k]+'×'+e.loot[k]);e.res=e.scaredAway?'保卫成功！':lost.length?INTR[e.k].name+'跑掉了…损失：'+lost.join('，'):'保卫成功！';save()}
 function intrUpdate(dt){const A=state.intr;if(!A)return;const now=Date.now();
  for(const id in A){const e=A[id];
@@ -79,7 +79,7 @@ function intrUpdate(dt){const A=state.intr;if(!A)return;const now=Date.now();
   else{ // wolf
    if(e.carry){escape(e)}else{let best=null,bd=1e9;for(const[aid]of liveAnimals()){const L2=Animals.live[aid],d=Math.hypot(L2.x-e.x,L2.y-e.y);if(d<bd){bd=d;best=aid}}
     if(!best){e.ph='flee';e.fx=e.x+(e.x-W/2);e.fy=e.y+(e.y-H/2)}else{const L2=Animals.live[best];e.ph2=null;
-     const r=goTo(e,L2.x,L2.y,WOLF_SPEED,dt,true);if(r&&r.fence!=null){e.ph2='attack';e.atk=r.fence;fenceDamage(r.fence,WOLF_DPS*dt)}else if(bd<.6){e.carry=best;toast('大灰狼抓住了'+(state.animals[best].k==='cow'?'小牛':'小猪')+'！快追！');save()}}}}
+     const r=goTo(e,L2.x,L2.y,WOLF_SPEED,dt,true);if(r&&r.fence!=null){e.ph2='attack';e.atk=r.fence;fenceDamage(r.fence,WOLF_DPS*dt)}else if(bd<.6){e.carry=best;toast('大灰狼抓住了'+(Animals.NAME[state.animals[best].k]||'小猪')+'！快追！');save()}}}}
   l.x=e.x;l.y=e.y;l.dir=e.dir}
  iSaveT-=dt;if(active().length&&iSaveT<=0&&iHost()){iSaveT=1.5;for(const[,e]of active()){e.x=+e.x.toFixed(2);e.y=+e.y.toFixed(2)}save()}
  buttonsI()}
