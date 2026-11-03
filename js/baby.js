@@ -12,6 +12,8 @@ const BABY_SAY={
  veryhungry:['胖宝好饿好饿…','肚子咕噜咕噜咕噜！','胖宝饿得走不动了','呜呜，要吃饭饭'],
  hdad:['爸爸，胖宝饿饿…','爸爸给胖宝种胡萝卜吧','爸爸的肚子也咕噜了吗','爸爸快去收菜菜'],
  hmom:['妈妈，胖宝饿饿…','妈妈给胖宝做好吃的','妈妈，肚子咕噜咕噜','妈妈喂胖宝吃菜菜'],
+ fdad:['爸爸～胖宝饿了','爸爸抱抱，要吃的～','爸爸爸爸，看看胖宝嘛','胖宝跟着爸爸走','爸爸最好了，给胖宝吃菜菜','胖宝肚子咕噜咕噜，爸爸听到了吗'],
+ fmom:['妈妈～胖宝饿了','妈妈抱抱，要吃的～','妈妈妈妈，胖宝乖乖的','胖宝跟着妈妈走','妈妈最好了，给胖宝吃菜菜','胖宝肚子咕噜咕噜，妈妈听到了吗'],
  full:['胖宝吃饱饱啦！','胖宝肚肚圆滚滚','好开心呀！','胖宝浑身是劲','胖宝想去探险！','吃饱了就要玩！'],
  tap:['最喜欢爸爸妈妈了！','胖宝爱你哦 ❤','抱抱～','嘿嘿，好痒','亲亲！','胖宝今天很乖哦','要一直在一起哦','爸爸妈妈辛苦啦']};
 const pick=a=>a[Math.random()*a.length|0];
@@ -57,6 +59,7 @@ function babyUpdate(dt){if(!baby.init){const[hx,hy]=babyHome();baby.x=hx+1;baby.
  if(baby.carried){baby.x=p.x;baby.y=p.y;baby.phase+=dt*40;setGrab(true,'放下胖宝');if(baby.nextBub<0){say(carryLine());baby.nextBub=3+Math.random()*4}return}
  const dp=Math.hypot(p.x-baby.x,p.y-baby.y);setGrab(dp<1.5,'抓住胖宝');
  if(dp<.6&&baby.mode!=='walk'){babyMode('walk',4)}
+ if(babyFollow(dt))return;
  if(baby.mode==='walk'){const dx=baby.tx-baby.x,dy=baby.ty-baby.y,d=Math.hypot(dx,dy),sp=1.6*dt*(baby.sprint>0?2.7:1)*[1.25,1,.6,.4][hunger()];if(baby.sprint>0&&Math.random()<dt*12)baby.puffs.push({x:baby.x,y:baby.y+.1,t:.5});
   if(d<.1||baby.t<0){const r=Math.random();const h=hunger();if(h>=2)babyMode(r<.35?'idle':r<.85?'sit':'sleep',h===3?5+Math.random()*6:3+Math.random()*4);else if(h===0&&r<.35)babyMode('hop',1.5);else babyMode(r<.45?'idle':r<.65?'sit':r<.8?'sleep':'hop',r<.65?2+Math.random()*4:r<.8?6+Math.random()*6:1.5)}
   else{const vx=dx/d*sp,vy=dy/d*sp;baby.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?2:3):(dy<0?1:0);let moved=false;
@@ -94,4 +97,14 @@ function babyBar(X,Y){const f=fullness()/100,h=hunger(),w=T*.7;ctx.beginPath();c
  if(f>0){ctx.beginPath();ctx.roundRect(X-w/2+2,Y+2,(w-4)*f,4,2);ctx.fillStyle=h>=2?'#ff6b6b':h===1?'#ffc94a':'#6fd07a';ctx.fill()}
  if(h>=2){ctx.font=`${T*.3}px sans-serif`;ctx.textAlign='center';ctx.fillText(h===3?'💦':'💧',X+w/2+10,Y-8+Math.sin(performance.now()/300)*2)}else if(h===0&&(performance.now()/700|0)%3===0){ctx.font=`${T*.26}px sans-serif`;ctx.textAlign='center';ctx.fillText('✨',X+w/2+10,Y-6)}}
 
-window.BabyHunger={fullness,hunger,feedBaby,feedRec,lineFor};
+// hungry: trail the nearest parent (local or online dog) ~1.2 tiles behind and beg; stick with them until fed or far apart
+function parents(){const L=[{k:'me',x:state.player.x,y:state.player.y,dad:(localStorage.getItem('our-island-char')||'yellow')==='yellow'}],o=window.Sync&&Sync.others;
+ if(o)for(const k in o){const d=o[k];if(d.here&&d.x!=null&&Date.now()-d.t<20000)L.push({k,x:d.x,y:d.y,dad:k==='jimao'})}return L}
+function babyFollow(dt){const h=hunger();if(h<2){baby.follow=null;return false}const P=parents();let t=P.find(q=>q.k===baby.follow);
+ if(!t||Math.hypot(t.x-baby.x,t.y-baby.y)>10){t=null;let bd=10;for(const q of P){const d=Math.hypot(q.x-baby.x,q.y-baby.y);if(d<bd){bd=d;t=q}}baby.follow=t?t.k:null;if(t)say(pick(BABY_SAY[t.dad?'fdad':'fmom']))}
+ if(!t)return false;const dx=t.x-baby.x,dy=t.y-baby.y,d=Math.hypot(dx,dy);
+ if(d>1.6){baby.mode='walk';baby.t=1;const sp=1.6*dt*(h===3?.75:1.05),vx=dx/d*sp,vy=dy/d*sp;baby.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?2:3):(dy<0?1:0);
+  if(babyFree(baby.x+vx,baby.y))baby.x+=vx;if(babyFree(baby.x,baby.y+vy))baby.y+=vy}
+ else if(baby.mode==='walk'||baby.t<0)babyMode(h===3?'sit':Math.random()<.5?'sit':'idle',2+Math.random()*2);else if(baby.mode==='hop')baby.hop+=dt;
+ if(baby.nextBub<0){say(Math.random()<.7?pick(BABY_SAY[t.dad?'fdad':'fmom']):pick(BABY_SAY[h===3?'veryhungry':'hungry']));baby.nextBub=5+Math.random()*4}return true}
+window.BabyHunger={babyFollow,fullness,hunger,feedBaby,feedRec,lineFor};
