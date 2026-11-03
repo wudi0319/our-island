@@ -2,7 +2,7 @@
 const W=64,H=64,T=48; // map size, tile px (CSS)
 const WATER=0,SAND=1,GRASS=2,SOIL=3;
 const CROPS={carrot:{name:'胡萝卜',ms:60e3},tomato:{name:'番茄',ms:120e3},strawberry:{name:'草莓',ms:180e3}}; // per stage, testing speeds
-const TOOLS=[['hoe','锄地'],['seed','播种'],['can','浇水'],['basket','收获'],['axe','砍树'],['fence','篱笆','fenceIcon'],['flower','花'],['tree','树'],['house','小屋'],['canteen','食堂','canteenIcon'],['erase','拆除']];
+const TOOLS=[['hoe','锄地'],['seed','播种'],['can','浇水'],['basket','收获'],['axe','砍树'],['fence','篱笆','fenceIcon'],['gate','栅栏门','gateIcon'],['flower','花'],['tree','树'],['house','小屋'],['canteen','食堂','canteenIcon'],['erase','拆除']];
 const SOLID={tree:1,house:1,canteen:1,fence:1,rock:1};const BIG={house:1,canteen:1};const CANTEEN='胖仔食堂';
 
 // ---- world generation (seeded) ----
@@ -29,7 +29,8 @@ function setChar(k){charKind=k;localStorage.setItem('our-island-char',k);documen
 let state=loadState(),tool='hoe',seed='carrot',dirty=false,lastSave=0;
 // ---- big houses: obj 'house' sits on the door tile (bottom row), footprint x-1..x+2, y-3..y (4x4) ----
 let occ={};const foot=a=>{const x=a%W,y=a/W|0,r=[];for(let dy=-3;dy<=0;dy++)for(let dx=-1;dx<=2;dx++)if(x+dx>=0&&x+dx<W&&y+dy>=0)r.push((y+dy)*W+x+dx);return r};
-function rebuildOcc(){occ={};for(const k in state.obj)if(BIG[state.obj[k]])foot(+k).forEach(j=>occ[j]=+k)}
+let gates=[];const gateAng={};
+function rebuildOcc(){occ={};gates=Object.keys(state.obj).filter(k=>state.obj[k]==='gate').map(Number);for(const k in state.obj)if(BIG[state.obj[k]])foot(+k).forEach(j=>occ[j]=+k)}
 function migrate(){state.names=state.names||{};let ch=false;
  // v9: food list lives at island level; merge old per-house lists (dedupe) and turn that house into the canteen
  if(!state.foodList){state.foodList=[];ch=true}
@@ -52,8 +53,12 @@ Store.subscribe(s=>{if(s&&s.v===2){state=s;rebuildOcc()}});migrate();
 // ---- helpers ----
 const idx=(x,y)=>y*W+x,inb=(x,y)=>x>=0&&y>=0&&x<W&&y<H;
 const ter=(x,y)=>inb(x,y)?state.ter[idx(x,y)]:WATER;
-const blocked=(x,y)=>{if(!inb(x,y))return true;const i=idx(x,y);return state.ter[i]===WATER||SOLID[state.obj[i]]||occ[i]!=null};
-const isFence=(x,y)=>inb(x,y)&&state.obj[idx(x,y)]==='fence';
+const blocked=(x,y)=>{if(!inb(x,y))return true;const i=idx(x,y);return state.ter[i]===WATER||SOLID[state.obj[i]]||occ[i]!=null||state.obj[i]==='gate'&&!gateNear(i)};
+// gates open when any dog (me or the other online pup) is within ~1.5 tiles
+function dogs(){const L=[state.player],o=window.Sync&&Sync.others;if(o)for(const k in o){const d=o[k];if(d.here&&d.x!=null&&Date.now()-d.t<20000)L.push(d)}return L}
+function gateNear(i){const x=i%W+.5,y=(i/W|0)+.5;return dogs().some(d=>Math.hypot(d.x-x,d.y-y)<1.6)}
+function gatesUpdate(dt){for(const i of gates){const t=gateNear(i)?1:0,a=gateAng[i]||0;if(a!==t){gateAng[i]=t>a?Math.min(1,a+dt*5):Math.max(0,a-dt*5);dirty=dirty}}}
+const isFence=(x,y)=>inb(x,y)&&(state.obj[idx(x,y)]==='fence'||state.obj[idx(x,y)]==='gate');
 
 // ---- crop growth ----
 function tick(){const now=Date.now();let ch=false;
@@ -68,8 +73,7 @@ joy.addEventListener('pointerdown',e=>{jid=e.pointerId;joy.setPointerCapture(jid
 joy.addEventListener('pointermove',e=>{if(e.pointerId===jid)joyMove(e)});
 const joyEnd=e=>{if(e.pointerId!==jid)return;jid=null;jv={x:0,y:0};knob.style.transform=''};
 joy.addEventListener('pointerup',joyEnd);joy.addEventListener('pointercancel',joyEnd);
-const keys={};addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;keys[e.key]=1;if(e.key===' ')act()});addEventListener('keyup',e=>keys[e.key]=0);
-document.getElementById('act').addEventListener('pointerdown',e=>{e.preventDefault();act()});
+const keys={};addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;keys[e.key]=1});addEventListener('keyup',e=>keys[e.key]=0);
 
 // ---- player ----
 let moving=false,phase=0;
@@ -102,7 +106,7 @@ function actAt(x,y){if(!inb(x,y))return;const i=idx(x,y);
  case'erase':if(o)delete state.obj[i];else if(c)delete state.crops[i];else if(t===SOIL)state.ter[i]=GRASS;else return;break;
  case'house':case'canteen':{const er=bigErr(x,y,tool);if(er)return toast(er);state.obj[i]=tool;if(tool==='house')state.names[i]='我们的家';else toast('胖仔食堂开张啦！');rebuildOcc();break}
  default:if(i===pi)return;if(t===WATER)return toast('不能放在水里');if(o||c||t===SOIL)return toast('这里放不下');state.obj[i]=tool;if(SOLID[tool]&&!canStand(p.x,p.y)){delete state.obj[i];return toast('离太近啦，退后一点')}}
- save();renderInv()}
+ rebuildOcc();save();renderInv()}
 
 // ---- rendering ----
 const cv=document.getElementById('map'),ctx=cv.getContext('2d');let vw=0,vh=0,dpr=1,frame=0;
@@ -125,25 +129,25 @@ function draw(){frame++;const p=state.player;
  const x0=Math.max(0,cx/T|0),y0=Math.max(0,cy/T|0),x1=Math.min(W-1,(cx+vw)/T|0),y1=Math.min(H-1,(cy+vh)/T|0);
  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)drawTile(x,y,state.ter[idx(x,y)]);
  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)drawShore(x,y,state.ter[idx(x,y)]);
- const[fx,fy]=front();ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=3;ctx.setLineDash([6,5]);ctx.beginPath();ctx.roundRect(fx*T+2,fy*T+2,T-4,T-4,10);ctx.stroke();ctx.setLineDash([]);
  // objects + player sorted by row
  const py=Math.floor(p.y);
  for(let y=Math.max(0,y0-1);y<=Math.min(H-1,y1+1);y++){
   for(let x=Math.max(0,x0-1);x<=Math.min(W-1,x1+1);x++){const i=idx(x,y),c=state.crops[i],o=state.obj[i];
    if(c){sprite(S.crop,x,y,c.type,c.stage);if(c.stage===2&&(frame>>4)%2)sprite((g)=>circ(g,.85,.15,.07,'#fff6a0'),x,y)}
-   if(o==='fence')sprite(S.fence,x,y,isFence(x,y-1),isFence(x+1,y),isFence(x,y+1),isFence(x-1,y));
+   if(o==='gate')sprite(S.gate,x,y,isFence(x,y-1)||isFence(x,y+1),gateAng[i]||0);
+   else if(o==='fence')sprite(S.fence,x,y,isFence(x,y-1),isFence(x+1,y),isFence(x,y+1),isFence(x-1,y));
    else if(BIG[o]){ctx.save();ctx.translate((x-1.6)*T,(y-2.99)*T);ctx.scale(T*4.2,T*4.2);S[o](ctx);ctx.restore();drawSign(x,y,o==='canteen'?CANTEEN:state.names[i]||'我们的家')}
    else if(o==='tree'){ctx.save();ctx.translate((x-.15)*T,(y-.6)*T);ctx.scale(T*1.3,T*1.6);S.tree(ctx);ctx.restore()}
    else if(o)sprite(S[o],x,y)}
   if(window.babyDraw&&!baby.carried&&y===Math.floor(baby.y))babyDraw();
-  window.drawOthers&&drawOthers(y);
+  window.drawOthers&&drawOthers(y);window.animalsDraw&&animalsDraw(y);
   if(y===py){ctx.save();ctx.translate((p.x-.7)*T,(p.y-1.2)*T);ctx.scale(T*1.4,T*1.4);S.puppy(ctx,p.dir,phase,moving,charKind);ctx.restore();if(typeof baby!=='undefined'&&baby.carried)babyDraw()}}
  
  if(prev){const ok=!bigErr(prev.x,prev.y,prev.k);ctx.fillStyle=ok?'rgba(80,220,110,.35)':'rgba(255,70,70,.38)';ctx.strokeStyle=ok?'#2fa84f':'#e03b3b';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect((prev.x-1)*T,(prev.y-3)*T,4*T,4*T,12);ctx.fill();ctx.stroke();
   ctx.save();ctx.globalAlpha=.6;ctx.translate((prev.x-1.6)*T,(prev.y-2.99)*T);ctx.scale(T*4.2,T*4.2);S[prev.k](ctx);ctx.restore()}
  }
 let last=performance.now();
-function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);window.babyUpdate&&babyUpdate(dt);draw();if(dirty&&now-lastSave>2000){lastSave=now;save()}requestAnimationFrame(loop)}
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);gatesUpdate(dt);window.animalsUpdate&&animalsUpdate(dt);window.babyUpdate&&babyUpdate(dt);draw();if(dirty&&now-lastSave>2000){lastSave=now;save()}requestAnimationFrame(loop)}
 
 const plaque=(x,y,name)=>{const w=Math.max(1.1,Math.min(2.4,.3*Array.from(name).length+.45)),h=.5;return{x:x+.5-w/2,y:y-1.98,w,h}};
 function drawSign(x,y,name){const q=plaque(x,y,name),sx=q.x*T,sy=q.y*T,w=q.w*T,h=q.h*T;
@@ -210,4 +214,4 @@ menu.querySelectorAll('[data-char]').forEach(b=>{const c=b.querySelector('canvas
 document.getElementById('menuClose').onclick=()=>menu.classList.add('hidden');setChar(charKind);
 addEventListener('resize',resize);addEventListener('pagehide',save);document.addEventListener('visibilitychange',()=>document.hidden&&save());
 resize();renderInv();tick();setInterval(tick,1000);requestAnimationFrame(loop);
-window.Game={get state(){return state},get moving(){return moving},refresh(){rebuildOcc();renderInv();if(!houseEl.classList.contains('hidden')&&houseA!=null&&state.obj[houseA]==='canteen')renderList()},set state(s){state=s;save();renderInv()},act,actAt,front,get preview(){return prev},get baby(){return baby},openSign,openBuilding,setChar,setTool:k=>tb.querySelector(`[data-tool=${k}]`).click()}; // hooks for sync/tests
+window.Game={get state(){return state},get moving(){return moving},refresh(){rebuildOcc();renderInv();if(!houseEl.classList.contains('hidden')&&houseA!=null&&state.obj[houseA]==='canteen')renderList()},set state(s){state=s;save();renderInv()},act,actAt,front,toast,save,gateNear,get gateAng(){return gateAng},get preview(){return prev},get baby(){return baby},openSign,openBuilding,setChar,setTool:k=>tb.querySelector(`[data-tool=${k}]`).click()}; // hooks for sync/tests

@@ -31,6 +31,28 @@ S.basket=c=>{rr(c,.15,.45,.7,.4,.12,'#d99a5b');circ(c,.38,.42,.11,'#ff5a4a');cir
 S.axe=c=>{rr(c,.45,.15,.1,.75,.05,'#b98257');c.beginPath();c.moveTo(.5,.15);c.quadraticCurveTo(.15,.2,.2,.45);c.lineTo(.5,.4);c.closePath();c.fillStyle='#b9c4cf';c.fill();c.lineWidth=.065;c.lineJoin='round';c.strokeStyle=OL;c.stroke()};
 S.erase=c=>{circ(c,.5,.5,.32,'#ff8f8f');c.strokeStyle='#fff';c.lineWidth=.1;c.lineCap='round';c.beginPath();c.moveTo(.36,.36);c.lineTo(.64,.64);c.moveTo(.64,.36);c.lineTo(.36,.64);c.stroke()};
 S.fenceIcon=c=>S.fence(c,0,1,0,1);
+// gate: two posts + swinging plank door; vert = runs north-south; open 0..1
+S.gate=(c,vert,open)=>{const cx=.5,cy=.55,post=(x,y)=>{shadow(c,x,y+.2,.1,.035);rr(c,x-.07,y-.3,.14,.46,.05,'#c98b52');circ(c,x,y-.3,.075,'#e8b47c')};
+ const door=(x0,y0,len,horiz)=>{const k=Math.cos(open*Math.PI/2*.92);c.save();c.translate(x0,y0);if(horiz)c.scale(k,1);else c.scale(1,k);
+  if(horiz){rr(c,0,-.2,len,.12,.04,'#f2c28a');rr(c,0,.02,len,.12,.04,'#f2c28a');c.lineWidth=.06;c.strokeStyle=OL;c.beginPath();c.moveTo(.04,.1);c.lineTo(len-.04,-.16);c.stroke()}
+  else{rr(c,-.17,0,.12,len,.04,'#f2c28a');rr(c,.05,0,.12,len,.04,'#f2c28a')}c.restore()};
+ if(!vert){door(.08,cy,.42,1);c.save();c.translate(1,0);c.scale(-1,1);door(.08,cy,.42,1);c.restore();post(.06,cy);post(.94,cy)}
+ else{post(cx,.08);door(cx,.0,.48,0);c.save();c.translate(0,1.1);c.scale(1,-1);door(cx,.0,.48,0);c.restore();post(cx,.98)}};
+S.gateIcon=c=>S.gate(c,0,0);
+// farm animals (unit tile, drawn ~1.2 tiles wide by caller); dir 2=left 3=right
+S.pig=(c,dir,ph,mv)=>{const f=dir===2?-1:1,b=mv?Math.abs(Math.sin(ph))*.04:0;c.save();c.translate(.5,0);c.scale(f,1);c.translate(-.5,0);
+ shadow(c,.5,.92,.32,.07);[.3,.42,.58,.7].forEach((x,i)=>rr(c,x-.05,.72+(mv&&i%2?-.03:0),.1,.17,.04,'#f59ab0'));
+ c.beginPath();c.ellipse(.48,.6-b,.32,.22,0,0,7);c.fillStyle='#ffc2cf';c.fill();c.lineWidth=.065;c.strokeStyle=OL;c.stroke();
+ c.beginPath();c.moveTo(.16,.55);c.quadraticCurveTo(.06,.5,.12,.44);c.lineWidth=.04;c.stroke();
+ circ(c,.74,.48-b,.18,'#ffc2cf');c.beginPath();c.moveTo(.64,.36-b);c.lineTo(.66,.24-b);c.lineTo(.74,.33-b);c.closePath();c.fillStyle='#f59ab0';c.fill();c.lineWidth=.05;c.stroke();
+ rr(c,.82,.46-b,.13,.11,.05,'#f59ab0');circ(c,.86,.515-b,.015,OL,false);circ(c,.91,.515-b,.015,OL,false);circ(c,.75,.43-b,.025,OL,false);circ(c,.7,.53-b,.03,'#ff8fa8',false);c.restore()};
+S.cow=(c,dir,ph,mv)=>{const f=dir===2?-1:1,b=mv?Math.abs(Math.sin(ph))*.03:0;c.save();c.translate(.5,0);c.scale(f,1);c.translate(-.5,0);
+ shadow(c,.5,.93,.36,.07);[.24,.36,.6,.72].forEach((x,i)=>rr(c,x-.05,.68+(mv&&i%2?-.03:0),.1,.22,.04,'#fffaf0'));
+ rr(c,.12,.36-b,.66,.38,.17,'#fffaf0');circ(c,.33,.48-b,.08,'#4a3a32',false);circ(c,.55,.6-b,.06,'#4a3a32',false);
+ c.lineWidth=.04;c.strokeStyle=OL;c.beginPath();c.moveTo(.13,.45);c.quadraticCurveTo(.04,.55,.08,.66);c.stroke();
+ c.beginPath();c.moveTo(.76,.26-b);c.lineTo(.74,.14-b);c.moveTo(.92,.26-b);c.lineTo(.95,.14-b);c.lineWidth=.06;c.strokeStyle='#e8c98f';c.stroke();
+ circ(c,.84,.38-b,.16,'#fffaf0');rr(c,.74,.44-b,.2,.12,.06,'#ffc2cf');circ(c,.79,.335-b,.022,OL,false);circ(c,.9,.335-b,.022,OL,false);
+ c.beginPath();c.ellipse(.68,.3-b,.06,.035,-.4,0,7);c.fillStyle='#fffaf0';c.fill();c.lineWidth=.04;c.strokeStyle=OL;c.stroke();c.restore()};
 // player: dir 0 down 1 up 2 left 3 right, step animation phase
 S.player=(c,dir,phase,moving)=>{const b=moving?Math.sin(phase)*.04:0,l=moving?Math.sin(phase)*.08:0;
  shadow(c,.5,.95,.24,.06);rr(c,.36+l*0.3,.78,.12,.16,.05,'#5a6fb8');rr(c,.52-l*0.3,.78,.12,.16,.05,'#5a6fb8');
