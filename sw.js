@@ -1,4 +1,4 @@
-const C='island-v29',F=['./','index.html','style.css?v=29','js/store.js?v=29','js/sprites.js?v=29','js/game.js?v=29','js/baby.js?v=29','js/animals.js?v=29','js/intruders.js?v=29','js/info.js?v=29','js/sync.js?v=29','js/vendor/supabase.js?v=29','manifest.webmanifest','icon-180.png'];
+const C='island-v30',F=['./','index.html','style.css?v=30','js/store.js?v=30','js/sprites.js?v=30','js/game.js?v=30','js/baby.js?v=30','js/animals.js?v=30','js/intruders.js?v=30','js/info.js?v=30','js/sync.js?v=30','js/vendor/supabase.js?v=30','manifest.webmanifest','icon-180.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(F)));self.skipWaiting()});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{const u=new URL(e.request.url);

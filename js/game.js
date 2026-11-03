@@ -148,7 +148,7 @@ function draw(){frame++;const p=state.player;
   ctx.save();ctx.globalAlpha=.6;ctx.translate((prev.x-1.6)*T,(prev.y-2.99)*T);ctx.scale(T*4.2,T*4.2);S[prev.k](ctx);ctx.restore()}
  }
 let last=performance.now();
-function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);gatesUpdate(dt);window.animalsUpdate&&animalsUpdate(dt);window.intrUpdate&&intrUpdate(dt);window.babyUpdate&&babyUpdate(dt);draw();if(dirty&&now-lastSave>2000){lastSave=now;save()}requestAnimationFrame(loop)}
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);gatesUpdate(dt);window.animalsUpdate&&animalsUpdate(dt);window.intrUpdate&&intrUpdate(dt);window.babyUpdate&&babyUpdate(dt);draw();window.intrOverlay&&intrOverlay();if(dirty&&now-lastSave>2000){lastSave=now;save()}requestAnimationFrame(loop)}
 
 const plaque=(x,y,name)=>{const w=Math.max(1.1,Math.min(2.4,.3*Array.from(name).length+.45)),h=.5;return{x:x+.5-w/2,y:y-1.98,w,h}};
 function drawSign(x,y,name){const q=plaque(x,y,name),sx=q.x*T,sy=q.y*T,w=q.w*T,h=q.h*T;

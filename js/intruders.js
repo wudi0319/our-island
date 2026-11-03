@@ -3,7 +3,7 @@
 // Fence durability: state.fhp[tile]={d:{role:totalDamage},r:{role:{at,base}}}; hp=100-(sumD-base of newest repair). Each phone writes only its own keys,
 // so repairs and damage never fight in the merge. No decay over time — only intruders damage fences.
 const EV_AWAY_MS=30*60e3,EV_CHANCE=.4,EV_MAX_PER_DAY=2,EV_KEEP_MS=3*864e5;
-const THIEF_MAX=3,THIEF_STEAL_S=3,THIEF_SPEED=1.3,WOLF_SPEED=1.8,ESCAPE_MUL=.45,FLEE_SPEED=4.5;
+const THIEF_MAX=3,THIEF_STEAL_S=5,THIEF_SPEED=.7,WOLF_SPEED=.9,ESCAPE_S=60,ESCAPE_MUL=.45,FLEE_SPEED=4.5;
 const FEAR_NEED={thief:6,wolf:12},FEAR_DECAY=.5,FEAR_IDLE_S=2,WOLF_DPS=8,BARK_R=1.8,FENCE_WOOD=1;
 const INTR={thief:{name:'小偷',ic:'🦝',alert:'🦝 有小偷来偷菜啦！快保护好你的菜！'},wolf:{name:'大灰狼',ic:'🐺',alert:'🐺 有野兽登岛啦！快保护猪猪和牛牛！'}};
 const CROPN={carrot:'胡萝卜',tomato:'番茄',strawberry:'草莓'};
@@ -55,7 +55,9 @@ function scare(id,e,why){if(e.ph==='flee'||e.ph==='done')return;const back=[];
  e.ph='flee';e.scaredAway=1;const ang=Math.atan2(e.y-state.player.y,e.x-state.player.x);e.fx=e.x+Math.cos(ang)*40;e.fy=e.y+Math.sin(ang)*40;
  if(iHost()){state.inv.wood=(state.inv.wood||0)+1}
  toast((why==='cry'?'胖宝一嗓子把'+INTR[e.k].name+'吓跑了！':INTR[e.k].name+'被吓跑啦！')+(back.length?' '+back.join('，')+'！':'')+(iHost()?' 🪵+1':''));renderInv();save()}
-function escape(e){e.ph='escape';const ang=Math.atan2(e.y-H/2,e.x-W/2);e.fx=W/2+Math.cos(ang)*60;e.fy=H/2+Math.sin(ang)*60}
+function escape(e){e.ph='escape';const ang=Math.atan2(e.y-H/2,e.x-W/2),cx=Math.cos(ang),cy=Math.sin(ang);let d=1;
+ for(;d<120;d+=.5){if(offIsland({x:e.x+cx*d,y:e.y+cy*d}))break}d+=1;e.fx=e.x+cx*d;e.fy=e.y+cy*d;
+ e.esp=+Math.max(.06,d/ESCAPE_S).toFixed(3);e.eEnd=Date.now()+ESCAPE_S*1e3}
 const offIsland=e=>!inb(Math.floor(e.x),Math.floor(e.y))||state.ter[idx(Math.floor(e.x),Math.floor(e.y))]===WATER&&Math.hypot(e.x-W/2,e.y-H/2)>22;
 function finish(id,e){e.ph='done';e.done=Date.now();let lost=[];
  if(e.carry){const a=state.animals[e.carry];if(a){a.gone=Date.now();lost.push((a.k==='cow'?'小牛':a.k==='piglet'?'迷你小猪':'小猪')+'被抱走了')}e.took=e.carry;e.carry=null}
@@ -70,7 +72,7 @@ function intrUpdate(dt){const A=state.intr;if(!A)return;const now=Date.now();
   if(now-lastBark>FEAR_IDLE_S*1e3&&fearOf(e)>0)e.fdec=+((e.fdec||0)+FEAR_DECAY*dt).toFixed(2);
   const carrying=e.carry||sum(e.loot)>0;
   if(e.ph==='flee'){goTo(e,e.fx,e.fy,FLEE_SPEED,dt);if(offIsland(e)||Math.hypot(e.x-state.player.x,e.y-state.player.y)>16)finish(id,e)}
-  else if(e.ph==='escape'){goTo(e,e.fx,e.fy,(e.k==='wolf'?WOLF_SPEED:THIEF_SPEED)*ESCAPE_MUL,dt);if(offIsland(e))finish(id,e)}
+  else if(e.ph==='escape'){goTo(e,e.fx,e.fy,e.esp||(e.k==='wolf'?WOLF_SPEED:THIEF_SPEED)*ESCAPE_MUL,dt);if(Date.now()>=(e.eEnd||0)||!e.eEnd&&offIsland(e))finish(id,e)}
   else if(e.k==='thief'){const C=state.crops;if(sum(e.loot)>=THIEF_MAX||!Object.keys(C).length){carrying?escape(e):(e.ph='flee',e.fx=e.x+(e.x-W/2),e.fy=e.y+(e.y-H/2))}
    else{if(e.tgt==null||!C[e.tgt]){const ks=Object.keys(C).sort((a,b)=>(C[b].stage===2)-(C[a].stage===2)||Math.hypot(a%W-e.x,(a/W|0)-e.y)-Math.hypot(b%W-e.x,(b/W|0)-e.y));e.tgt=+ks[0];e.st=0}
     const tx=e.tgt%W+.5,ty=(e.tgt/W|0)+.5;if(goTo(e,tx,ty,THIEF_SPEED,dt)<.1){e.ph2='steal';e.st=(e.st||0)+dt;if(e.st>=THIEF_STEAL_S){const c=C[e.tgt];e.loot[c.type]=(e.loot[c.type]||0)+1;delete C[e.tgt];e.tgt=null;e.st=0;toast('小偷偷走了一个'+CROPN[c.type]+'！');save()}}else e.ph2=null}}
@@ -109,10 +111,21 @@ function intrDraw(row){const p=state.player;
   ctx.save();ctx.translate((l.x-sc/2)*T,(l.y-sc*.88)*T);ctx.scale(T*sc,T*sc);(e.k==='wolf'?drawWolf:drawThief)(ctx,l.dir,l.ph||0,mv,l.cover>0||e.ph==='flee',sum(e.loot)>0);ctx.restore();
   const need=FEAR_NEED[e.k],f=Math.min(1,fearOf(e)/need),w=T*.95,X=l.x*T-w/2,Y=(l.y-sc*.95)*T-14;ctx.beginPath();ctx.roundRect(X,Y,w,10,5);ctx.fillStyle='rgba(255,255,255,.92)';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#3b2a20';ctx.stroke();
   if(f>0){ctx.beginPath();ctx.roundRect(X+2,Y+2,(w-4)*f,6,3);ctx.fillStyle='#ff5a5a';ctx.fill()}ctx.font=`${T*.3}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(e.ph==='flee'?'💦':'😨',X-10,Y+5);
+  if(e.ph==='escape'&&e.eEnd){const sec=Math.max(0,Math.ceil((e.eEnd-Date.now())/1e3));ctx.font=`900 ${T*.32}px sans-serif`;ctx.lineWidth=4;ctx.strokeStyle='#fff';ctx.strokeText('⏱'+sec+'s',l.x*T,Y-14);ctx.fillStyle='#d9534f';ctx.fillText('⏱'+sec+'s',l.x*T,Y-14)}
   if(e.ph2==='steal'||e.ph2==='attack'){ctx.fillText(e.ph2==='steal'?'🤫':'💥',l.x*T+T*.5,(l.y-sc*.6)*T+Math.sin(performance.now()/120)*3)}}
  if(Math.floor(p.y)===row){if(dogBub&&dogBub.t>0){dogBub.t-=1/60;const X=p.x*T,Y=(p.y-1.6)*T;ctx.font=`900 ${T*.3}px "PingFang SC",sans-serif`;const tw=ctx.measureText(dogBub.m).width+18;ctx.globalAlpha=Math.min(1,dogBub.t*3);
    ctx.beginPath();ctx.roundRect(X-tw/2,Y-15,tw,30,15);ctx.fillStyle='#fff';ctx.fill();ctx.lineWidth=2.5;ctx.strokeStyle='#3b2a20';ctx.stroke();ctx.fillStyle='#d9534f';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(dogBub.m,X,Y+1);ctx.globalAlpha=1}
   if(cryFx>0){cryFx-=1/60;for(let k=0;k<3;k++){const r=((1.2-cryFx)*2+k*.35)%1.2;ctx.globalAlpha=Math.max(0,1-r);ctx.beginPath();ctx.arc(p.x*T,(p.y-.5)*T,T*(.6+r*2.2),0,7);ctx.lineWidth=4;ctx.strokeStyle='#5ab8f0';ctx.stroke()}ctx.globalAlpha=1}}}
+function intrOverlay(){const[cx,cy]=camXY(),m=52;ctx.setTransform(dpr,0,0,dpr,0,0);
+ for(const[id,e]of active()){if(e.ph==='flee')continue;const l=IL[id]||e,sx=l.x*T-cx,sy=(l.y-.5)*T-cy;if(sx>-10&&sx<vw+10&&sy>-10&&sy<vh+10)continue;
+  const ox=vw/2,oy=vh/2,dx=sx-ox,dy=sy-oy,k=Math.min((vw/2-m)/Math.abs(dx||1e-6),(vh/2-m-70)/Math.abs(dy||1e-6)),ax=Math.max(m,Math.min(vw-m,ox+dx*k)),ay=Math.max(m+60,Math.min(vh-m-140,oy+dy*k)),a=Math.atan2(dy,dx);
+  const dist=Math.round(Math.hypot(l.x-state.player.x,l.y-state.player.y)),pulse=1+Math.sin(performance.now()/180)*.08;
+  ctx.save();ctx.translate(ax,ay);ctx.scale(pulse,pulse);ctx.beginPath();ctx.arc(0,0,22,0,7);ctx.fillStyle='rgba(255,255,255,.95)';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='#d9534f';ctx.stroke();
+  ctx.save();ctx.rotate(a);ctx.beginPath();ctx.moveTo(34,0);ctx.lineTo(22,-9);ctx.lineTo(22,9);ctx.closePath();ctx.fillStyle='#d9534f';ctx.fill();ctx.restore();
+  ctx.font='22px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(INTR[e.k].ic,0,1);
+  ctx.font='900 12px sans-serif';ctx.lineWidth=3;ctx.strokeStyle='#fff';let t=dist+'m';if(e.ph==='escape'&&e.eEnd)t+=' ⏱'+Math.max(0,Math.ceil((e.eEnd-Date.now())/1e3))+'s';
+  ctx.strokeText(t,0,32);ctx.fillStyle='#d9534f';ctx.fillText(t,0,32);ctx.restore()}}
+window.intrOverlay=intrOverlay;
 for(const id in state.intr||{})if(state.intr[id].ph==='done')seenDone.add(id);
 maybeEvent();
 window.Intr={start:startEvent,bark,fenceHp,fenceDamage,fenceRepair,fearOf,NEED:FEAR_NEED,get IL(){return IL}};
