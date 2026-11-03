@@ -46,7 +46,11 @@ function babyGrab(){feedBabyBtn.classList.remove('hidden');baby.carried=true;bab
 function babyDrop(){const p=state.player,d=[[0,1],[0,-1],[-1,0],[1,0]][p.dir];const c=[d,[0,1],[1,0],[-1,0],[0,-1]];
  for(const[dx,dy]of c){const x=Math.floor(p.x)+dx+.5,y=Math.floor(p.y)+dy+.5;if(babyFree(x,y)){baby.x=x;baby.y=y;baby.carried=false;feedBabyBtn.classList.add('hidden');pickEl.classList.add('hidden');if(Math.random()<.5&&babySprint())return;babyMode('hop',1.2);say(pick(['胖宝自由啦～','胖宝落地啦','胖宝开心地蹦了蹦','胖宝站稳啦']));return}}toast('这里放不下胖宝')}
 function babyHome(){for(const k in state.obj)if(state.obj[k]==='house'||state.obj[k]==='canteen')return[k%W+.5,(k/W|0)+2.5];return[state.player.x,state.player.y+1]}
-function babyFree(x,y){const r=.2;return![[x-r,y-.05],[x+r,y-.05],[x-r,y+.15],[x+r,y+.15]].some(([a,b])=>blocked(Math.floor(a),Math.floor(b)))}
+function babyFree(x,y){const r=.2;return![[x-r,y-.05],[x+r,y-.05],[x-r,y+.15],[x+r,y+.15]].some(([a,b])=>babyBlocked(Math.floor(a),Math.floor(b)))}
+// 胖宝 hops over fences & gates (still blocked by water, buildings, trees, rocks)
+function babyBlocked(x,y){if(inb(x,y)){const o=state.obj[idx(x,y)];if(o==='fence'||o==='gate')return false}return blocked(x,y)}
+function babyHurdle(dt){baby.jumpT=Math.max(0,(baby.jumpT||0)-dt);baby.hurdleCd=Math.max(0,(baby.hurdleCd||0)-dt);const tx=Math.floor(baby.x),ty=Math.floor(baby.y+.05),o=inb(tx,ty)&&state.obj[idx(tx,ty)],on=o==='fence'||o==='gate';
+ if(on&&!baby.onFence){baby.jumpT=.5;if(baby.hurdleCd<=0){say(pick(['胖宝跨栏！','胖宝跨栏！🏃','嘿咻！胖宝跨栏！','胖宝跳过去啦！']));baby.hurdleCd=8}}baby.onFence=on}
 function babyName(){state.baby=state.baby||{name:'胖宝'};return state.baby.name||'胖宝'}
 function say(m){baby.bub=m.replace(/胖宝/g,babyName());baby.bubT=3.5;baby.nextBub=6+Math.random()*9}
 function babyMode(m,t){baby.mode=m;baby.t=t;if(m==='walk'){const[hx,hy]=babyHome();for(let k=0;k<20;k++){const a=Math.random()*7,d=1+Math.random()*3;let tx=baby.x+Math.cos(a)*d,ty=baby.y+Math.sin(a)*d;
@@ -59,7 +63,7 @@ function babyUpdate(dt){if(!baby.init){const[hx,hy]=babyHome();baby.x=hx+1;baby.
  if(baby.carried){baby.x=p.x;baby.y=p.y;baby.phase+=dt*40;setGrab(true,'放下胖宝');if(baby.nextBub<0){say(carryLine());baby.nextBub=3+Math.random()*4}return}
  const dp=Math.hypot(p.x-baby.x,p.y-baby.y);setGrab(dp<1.5,'抓住胖宝');
  if(dp<.6&&baby.mode!=='walk'){babyMode('walk',4)}
- if(babyFollow(dt))return;
+ babyHurdle(dt);if(babyFollow(dt))return;
  if(baby.mode==='walk'){const dx=baby.tx-baby.x,dy=baby.ty-baby.y,d=Math.hypot(dx,dy),sp=1.6*dt*(baby.sprint>0?2.7:1)*[1.25,1,.6,.4][hunger()];if(baby.sprint>0&&Math.random()<dt*12)baby.puffs.push({x:baby.x,y:baby.y+.1,t:.5});
   if(d<.1||baby.t<0){const r=Math.random();const h=hunger();if(h>=2)babyMode(r<.35?'idle':r<.85?'sit':'sleep',h===3?5+Math.random()*6:3+Math.random()*4);else if(h===0&&r<.35)babyMode('hop',1.5);else babyMode(r<.45?'idle':r<.65?'sit':r<.8?'sleep':'hop',r<.65?2+Math.random()*4:r<.8?6+Math.random()*6:1.5)}
   else{const vx=dx/d*sp,vy=dy/d*sp;baby.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?2:3):(dy<0?1:0);let moved=false;
@@ -68,7 +72,7 @@ function babyUpdate(dt){if(!baby.init){const[hx,hy]=babyHome();baby.x=hx+1;baby.
  if(baby.nextBub<0)say(lineFor(baby.mode)||pick(BABY_SAY[baby.mode]||BABY_SAY.idle))}
 function babyTap(wx,wy){if(baby.carried)return false;if(Math.hypot(wx-baby.x,wy-(baby.y-.35))>.7)return false;babyMode('hop',1.2);baby.heart=1.6;say(lineFor('tap')||pick(BABY_SAY.tap));return true}
 function babyDraw(){const b=baby;if(b.carried)return drawCarried();for(const f of b.puffs){ctx.globalAlpha=f.t*1.6;ctx.beginPath();ctx.arc(f.x*T,f.y*T,(1-f.t)*T*.35+4,0,7);ctx.fillStyle='#f3e6cc';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#d8c39a';ctx.stroke()}ctx.globalAlpha=1;const sleeping=b.mode==='sleep',sit=b.mode==='sit'||sleeping;let jump=0;
- if(b.mode==='hop')jump=Math.abs(Math.sin(b.hop*7))*.35;
+ if(b.mode==='hop')jump=Math.abs(Math.sin(b.hop*7))*.35;if(b.jumpT>0)jump=Math.max(jump,Math.sin((.5-b.jumpT)/.5*Math.PI)*.45);
  const X=b.x*T,Y=(b.y-jump)*T,sz=T*1.05;
  ctx.save();ctx.translate(X,Y);if(sit)ctx.scale(1.08,.9);ctx.scale(1.15,1);ctx.translate(-sz/2,-sz*.94);ctx.scale(sz,sz);
  S.closedEyes=sleeping;S.puppy(ctx,sit?0:b.dir,b.phase,b.mode==='walk'||(!sit&&b.mode==='hop'),'baby');S.closedEyes=false;ctx.restore();
