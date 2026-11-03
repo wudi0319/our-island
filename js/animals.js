@@ -10,6 +10,9 @@ const live={};let initLf=false;let spawnT=20,posT=30;
 const role=()=>window.Sync&&Sync.auth?Sync.auth.role:'me';
 function isHost(){if(!window.Sync||!Sync.auth||Sync.auth.role==='xiaobai')return true;const o=Sync.others.xiaobai;return!(o&&o.here&&!o.hidden)}
 const fedTotal=a=>Object.values(a.fed||{}).reduce((s,n)=>s+(+n||0),0);
+const GROW_FEEDS=8,GROWN={piglet:'pig',calf:'cow'};
+// breeding progress for adults: feeds since adulthood (fb = feeds counted while young; per-phone counters keep merging additive)
+const breedN=a=>fedTotal(a)-(a.fb||0);
 // animals: no water, no objects of any kind (fences/gates always block), no buildings
 function aFree(x,y,drv){const tx=Math.floor(x),ty=Math.floor(y);if(!inb(tx,ty))return false;const i=idx(tx,ty),o=state.obj[i];return state.ter[i]!==WATER&&(!o||drv&&o==='gate'&&(gateAng[i]||0)>.6)&&occ[i]==null}
 const onGate=(x,y)=>state.obj[idx(Math.floor(x),Math.floor(y))]==='gate';
@@ -60,7 +63,10 @@ function drive(){const id=nearest(ALLK);if(!id)return;const l=live[id],p=state.p
  if(bg){l.tx=bg[0];l.ty=bg[1];l.nx=bg[0]+bg[2]*1.3;l.ny=bg[1]+bg[3]*1.3}
  l.run=Math.min(5,Math.max(l.run,0)+2.5);l.t=6;l.dir=dx<0?2:3;if(!isHost()&&window.SyncDrive)SyncDrive({id,tx:l.tx,ty:l.ty,nx:l.nx,ny:l.ny,run:l.run,dir:l.dir});if(!l.tt||performance.now()-l.tt>1500){l.tt=performance.now();toast(k==='cow'||k==='calf'?'小牛快跑～':'小猪快跑～')}}
 function feed(){const id=nearest(ALLK),f=foodOf();if(!id||!f)return;const a=state.animals[id],r=role();state.inv[f]--;a.lf=a.lf||{};a.lf[r]=Date.now();
- if(BABY[a.k]){a.fed=a.fed||{};a.fed[r]=(a.fed[r]||0)+1;const n=fedTotal(a);if(n%8===0){const l=live[id],cid=id+'-b'+n/8;if(!state.animals[cid]){let bx=l.x,by=l.y;for(const[ox,oy]of[[.8,0],[-.8,0],[0,.8],[0,-.8],[0,0]])if(aFreeR(l.x+ox,l.y+oy,.2)){bx=l.x+ox;by=l.y+oy;break}
+ if(GROWN[a.k]){a.fed=a.fed||{};a.fed[r]=(a.fed[r]||0)+1;const n=fedTotal(a);
+  if(n>=GROW_FEEDS){const was=a.k;a.k=GROWN[was];a.fb=n;a.grown=Date.now();delete a.mom;const l=live[id];if(l){l.tx=null;l.nx=null}toast(a.k==='cow'?'小牛长大了！🐮':'小猪长大了！🐷')}
+  else toast(ANI[a.k].name+'吃了'+FNM[f]+' '+FIC[f]+'（'+n+'/'+GROW_FEEDS+'）')}
+ else if(BABY[a.k]){a.fed=a.fed||{};a.fed[r]=(a.fed[r]||0)+1;const n=breedN(a);if(n%8===0){const l=live[id],cid=id+'-b'+n/8;if(!state.animals[cid]){let bx=l.x,by=l.y;for(const[ox,oy]of[[.8,0],[-.8,0],[0,.8],[0,-.8],[0,0]])if(aFreeR(l.x+ox,l.y+oy,.2)){bx=l.x+ox;by=l.y+oy;break}
    spawnAnimal(BABY[a.k],bx,by,{id:cid,mom:id})}toast(a.k==='cow'?'生了一只小牛犊！🐮':'生了一只迷你小猪！🐷')}else toast('喂了一根'+FNM[f]+' '+FIC[f])}
  else toast(ANI[a.k].name+'吃了'+FNM[f]+' '+FIC[f]);commit(id);save();renderInv()}
 driveBtn.addEventListener('pointerdown',e=>{e.preventDefault();drive()});feedBtn.addEventListener('pointerdown',e=>{e.preventDefault();feed()});
@@ -68,6 +74,6 @@ driveBtn.addEventListener('pointerdown',e=>{e.preventDefault();drive()});feedBtn
 function animalsDraw(row){for(const id in live){const l=live[id],a=state.animals[id];if(!a||Math.floor(l.y)!==row)continue;const k=a.k;if(l.fade)ctx.globalAlpha=Math.max(0,l.fade/1.2);const sc=k==='piglet'?.7:k==='calf'?.85:k==='cow'?1.45:1.2;
  ctx.save();ctx.translate((l.x-sc/2)*T,(l.y-sc*.85)*T);ctx.scale(T*sc,T*sc);S[k==='cow'||k==='calf'?'cow':'pig'](ctx,l.dir,l.ph,l.mv);ctx.restore();ctx.globalAlpha=1;
  if(!l.fade&&Date.now()-lastFed(a)>ANI_HUNGRY_MS){ctx.font=`${T*.36}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('💢',(l.x+sc*.3)*T,(l.y-sc*.95)*T+Math.sin(performance.now()/250)*2)}
- if(BABY[k]){const f=(fedTotal(a)%8)/8,w=T*.8,X=l.x*T-w/2,Y=(l.y-sc*.85)*T+2;ctx.beginPath();ctx.roundRect(X,Y,w,9,5);ctx.fillStyle='rgba(255,255,255,.9)';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#3b2a20';ctx.stroke();
-  if(f>0){ctx.beginPath();ctx.roundRect(X+2,Y+2,(w-4)*f,5,3);ctx.fillStyle='#ff8a2a';ctx.fill()}}}}
+ if(BABY[k]||GROWN[k]){const f=GROWN[k]?Math.min(1,fedTotal(a)/GROW_FEEDS):(breedN(a)%8)/8,w=T*.8,X=l.x*T-w/2,Y=(l.y-sc*.85)*T+2;ctx.beginPath();ctx.roundRect(X,Y,w,9,5);ctx.fillStyle='rgba(255,255,255,.9)';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#3b2a20';ctx.stroke();
+  if(f>0){ctx.beginPath();ctx.roundRect(X+2,Y+2,(w-4)*f,5,3);ctx.fillStyle=GROWN[k]?'#5cc85a':'#ff8a2a';ctx.fill()}}}}
 window.gateDriven=gateDriven;window.Animals={applyDrive,NAME:{pig:'小猪',cow:'小牛',piglet:'迷你小猪',calf:'小牛犊'},lastFed,HUNGRY:ANI_HUNGRY_MS,LEAVE:ANI_LEAVE_MS,live,spawn:spawnAnimal,drive,feed,isHost,fedTotal,aFree,nearest};
