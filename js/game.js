@@ -103,9 +103,9 @@ function actAt(x,y){if(!inb(x,y))return;const i=idx(x,y);
  case'can':if(!c)return toast('前面没有作物');if(c.stage===2)return toast('成熟啦，快收获');if(c.wateredAt)return toast('已经浇过啦');c.wateredAt=Date.now();toast('浇水啦 💧');break;
  case'basket':if(!c||c.stage<2)return toast('还没成熟呢');state.inv[c.type]++;toast('收获 '+CROPS[c.type].name+' +1');delete state.crops[i];break;
  case'axe':if(o!=='tree')return toast('前面没有树');delete state.obj[i];state.inv.wood=(state.inv.wood||0)+3;toast('木头 +3');break;
- case'erase':if(o)delete state.obj[i];else if(c)delete state.crops[i];else if(t===SOIL)state.ter[i]=GRASS;else return;break;
+ case'erase':if(o){delete state.obj[i];if(state.fhp)delete state.fhp[i]}else if(c)delete state.crops[i];else if(t===SOIL)state.ter[i]=GRASS;else return;break;
  case'house':case'canteen':{const er=bigErr(x,y,tool);if(er)return toast(er);state.obj[i]=tool;if(tool==='house')state.names[i]='我们的家';else toast('胖仔食堂开张啦！');rebuildOcc();break}
- default:if(i===pi)return;if(t===WATER)return toast('不能放在水里');if(o||c||t===SOIL)return toast('这里放不下');state.obj[i]=tool;if(SOLID[tool]&&!canStand(p.x,p.y)){delete state.obj[i];return toast('离太近啦，退后一点')}}
+ default:if((tool==='fence'||tool==='gate')&&(o==='fence'||o==='gate'))return window.fenceRepair&&fenceRepair(i);if(i===pi)return;if(t===WATER)return toast('不能放在水里');if(o||c||t===SOIL)return toast('这里放不下');state.obj[i]=tool;if(SOLID[tool]&&!canStand(p.x,p.y)){delete state.obj[i];return toast('离太近啦，退后一点')}if(window.fenceNew&&(tool==='fence'||tool==='gate'))fenceNew(i)}
  rebuildOcc();save();renderInv()}
 
 // ---- rendering ----
@@ -136,18 +136,19 @@ function draw(){frame++;const p=state.player;
    if(c){sprite(S.crop,x,y,c.type,c.stage);if(c.stage===2&&(frame>>4)%2)sprite((g)=>circ(g,.85,.15,.07,'#fff6a0'),x,y)}
    if(o==='gate')sprite(S.gate,x,y,isFence(x,y-1)||isFence(x,y+1),gateAng[i]||0);
    else if(o==='fence')sprite(S.fence,x,y,isFence(x,y-1),isFence(x+1,y),isFence(x,y+1),isFence(x-1,y));
+   if((o==='fence'||o==='gate')&&window.fenceFx)fenceFx(x,y,i);
    else if(BIG[o]){ctx.save();ctx.translate((x-1.6)*T,(y-2.99)*T);ctx.scale(T*4.2,T*4.2);S[o](ctx);ctx.restore();drawSign(x,y,o==='canteen'?CANTEEN:state.names[i]||'我们的家')}
    else if(o==='tree'){ctx.save();ctx.translate((x-.15)*T,(y-.6)*T);ctx.scale(T*1.3,T*1.6);S.tree(ctx);ctx.restore()}
    else if(o)sprite(S[o],x,y)}
   if(window.babyDraw&&!baby.carried&&y===Math.floor(baby.y))babyDraw();
-  window.drawOthers&&drawOthers(y);window.animalsDraw&&animalsDraw(y);
+  window.drawOthers&&drawOthers(y);window.animalsDraw&&animalsDraw(y);window.intrDraw&&intrDraw(y);
   if(y===py){ctx.save();ctx.translate((p.x-.7)*T,(p.y-1.2)*T);ctx.scale(T*1.4,T*1.4);S.puppy(ctx,p.dir,phase,moving,charKind);ctx.restore();if(typeof baby!=='undefined'&&baby.carried)babyDraw()}}
  
  if(prev){const ok=!bigErr(prev.x,prev.y,prev.k);ctx.fillStyle=ok?'rgba(80,220,110,.35)':'rgba(255,70,70,.38)';ctx.strokeStyle=ok?'#2fa84f':'#e03b3b';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect((prev.x-1)*T,(prev.y-3)*T,4*T,4*T,12);ctx.fill();ctx.stroke();
   ctx.save();ctx.globalAlpha=.6;ctx.translate((prev.x-1.6)*T,(prev.y-2.99)*T);ctx.scale(T*4.2,T*4.2);S[prev.k](ctx);ctx.restore()}
  }
 let last=performance.now();
-function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);gatesUpdate(dt);window.animalsUpdate&&animalsUpdate(dt);window.babyUpdate&&babyUpdate(dt);draw();if(dirty&&now-lastSave>2000){lastSave=now;save()}requestAnimationFrame(loop)}
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);gatesUpdate(dt);window.animalsUpdate&&animalsUpdate(dt);window.intrUpdate&&intrUpdate(dt);window.babyUpdate&&babyUpdate(dt);draw();if(dirty&&now-lastSave>2000){lastSave=now;save()}requestAnimationFrame(loop)}
 
 const plaque=(x,y,name)=>{const w=Math.max(1.1,Math.min(2.4,.3*Array.from(name).length+.45)),h=.5;return{x:x+.5-w/2,y:y-1.98,w,h}};
 function drawSign(x,y,name){const q=plaque(x,y,name),sx=q.x*T,sy=q.y*T,w=q.w*T,h=q.h*T;

@@ -22,10 +22,10 @@ let uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function spawnAnimal(k,x,y,extra){if(x==null){for(let n=0;n<200;n++){const tx=2+Math.random()*(W-4)|0,ty=2+Math.random()*(H-4)|0;
   if(state.ter[idx(tx,ty)]===GRASS&&aFreeR(tx+.5,ty+.5,.3)&&Math.hypot(tx-state.player.x,ty-state.player.y)>3){x=tx+.5;y=ty+.5;break}}if(x==null)return null}
  state.animals=state.animals||{};const id=(extra&&extra.id)||k[0]+uid();state.animals[id]=Object.assign({k,x:+x.toFixed(2),y:+y.toFixed(2),fed:{},lf:{[role()]:Date.now()}},extra||{});delete state.animals[id].id;sync();return id}
-function nearest(kinds){const p=state.player;let best=null,bd=1.6;for(const id in live){const a=state.animals[id];if(!a||!kinds.includes(a.k))continue;const l=live[id];if(l.fade)continue;const d=Math.hypot(l.x-p.x,l.y-p.y);if(d<bd){bd=d;best=id}}return best}
+function nearest(kinds){const p=state.player;let best=null,bd=1.6;for(const id in live){const a=state.animals[id];if(!a||!kinds.includes(a.k))continue;const l=live[id];if(l.fade||window.intrCarrier&&intrCarrier(id))continue;const d=Math.hypot(l.x-p.x,l.y-p.y);if(d<bd){bd=d;best=id}}return best}
 function animalsUpdate(dt){sync();const A=state.animals;
  if(initLf){initLf=false;save()}
- for(const id in live){const l=live[id],a=A[id];if(l.fade){l.fade-=dt;if(l.fade<=0)delete live[id];continue}const sp=ANI[a.k].sp*(l.run>0?4:1);l.t-=dt;
+ for(const id in live){const l=live[id],a=A[id];if(l.fade){l.fade-=dt;if(l.fade<=0)delete live[id];continue}const cw=window.intrCarrier&&intrCarrier(id);if(cw){l.x=cw.x+.2;l.y=cw.y-.05;l.tx=null;l.mv=true;l.ph+=dt*20;continue}const sp=ANI[a.k].sp*(l.run>0?4:1);l.t-=dt;
   if(l.run>0){l.run-=dt;if(l.run<=0){l.tx=null;l.t=2+Math.random()*3;commit(id);save()}}
   if(l.tx==null&&l.t<0){const mom=a.mom&&live[a.mom];const cx=mom?mom.x:l.x,cy=mom?mom.y:l.y,r=mom?1.5:3;
    const tx=cx+(Math.random()*2-1)*r,ty=cy+(Math.random()*2-1)*r;if(Math.random()<.6&&aFreeR(tx,ty,.3)){l.tx=tx;l.ty=ty;l.t=8}else l.t=2+Math.random()*4}
