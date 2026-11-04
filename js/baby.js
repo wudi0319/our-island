@@ -75,7 +75,7 @@ function babyDraw(){const b=baby;if(b.carried)return drawCarried();for(const f o
  if(b.mode==='hop')jump=Math.abs(Math.sin(b.hop*7))*.35;if(b.jumpT>0)jump=Math.max(jump,Math.sin((.5-b.jumpT)/.5*Math.PI)*.45);
  const X=b.x*T,Y=(b.y-jump)*T,sz=T*1.05;
  ctx.save();ctx.translate(X,Y);if(sit)ctx.scale(1.08,.9);ctx.scale(1.15,1);ctx.translate(-sz/2,-sz*.94);ctx.scale(sz,sz);
- S.closedEyes=sleeping;S.puppy(ctx,sit?0:b.dir,b.phase,b.mode==='walk'||(!sit&&b.mode==='hop'),'baby');S.closedEyes=false;ctx.restore();
+ S.closedEyes=sleeping;{const sk=window.babySkin?babySkin():'dog',mv=b.mode==='walk'||(!sit&&b.mode==='hop');if(sk==='dog')S.puppy(ctx,sit?0:b.dir,b.phase,mv,'baby');else S.babyHuman(ctx,sit?0:b.dir,b.phase,mv,sk)}S.closedEyes=false;ctx.restore();
  const font=`900 ${T*.26}px "Yuanti SC","PingFang SC",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
  // name label
  const name=babyName(),ny=Y-sz*1.0;ctx.font=font;const nw=ctx.measureText(name).width+14;
@@ -90,7 +90,7 @@ function babyDraw(){const b=baby;if(b.carried)return drawCarried();for(const f o
   ctx.fillStyle='#7a4b1d';ctx.fillText(b.bub,X,by+1);ctx.globalAlpha=1}}
 function drawCarried(){const b=baby,p=state.player,X=p.x*T,Y=(p.y-.12)*T,sz=T*.82;
  ctx.save();ctx.translate(X+(p.dir===2?-.18:p.dir===3?.18:0)*T,Y);ctx.rotate(Math.sin(performance.now()/90)*.08);ctx.scale(1.15,1);ctx.translate(-sz/2,-sz*.94);ctx.scale(sz,sz);
- S.puppy(ctx,p.dir===1?1:0,b.phase,true,'baby');ctx.restore();
+ {const sk=window.babySkin?babySkin():'dog';if(sk==='dog')S.puppy(ctx,p.dir===1?1:0,b.phase,true,'baby');else{S.fussy=true;S.babyHuman(ctx,0,b.phase,true,sk);S.fussy=false}}ctx.restore();
  // arms hugging
  ctx.fillStyle=charKind==='yellow'?'#f6dfb4':'#fff';ctx.strokeStyle='#1e1a18';ctx.lineWidth=2.5;[-1,1].forEach(s=>{ctx.beginPath();ctx.ellipse(X+s*T*.26,Y-T*.32,T*.09,T*.07,0,0,7);ctx.fill();ctx.stroke()});
  const ny=Y-sz*1.05;ctx.textAlign='center';ctx.textBaseline='middle';
