@@ -75,10 +75,10 @@ function babyDraw(){const b=baby;if(b.carried)return drawCarried();for(const f o
  if(b.mode==='hop')jump=Math.abs(Math.sin(b.hop*7))*.35;if(b.jumpT>0)jump=Math.max(jump,Math.sin((.5-b.jumpT)/.5*Math.PI)*.45);
  const X=b.x*T,Y=(b.y-jump)*T,sz=T*1.05;
  ctx.save();ctx.translate(X,Y);if(sit)ctx.scale(1.08,.9);ctx.scale(1.15,1);ctx.translate(-sz/2,-sz*.94);ctx.scale(sz,sz);
- S.closedEyes=sleeping;{const sk=window.babySkin?babySkin():'dog',mv=b.mode==='walk'||(!sit&&b.mode==='hop');if(sk==='dog')S.puppy(ctx,sit?0:b.dir,b.phase,mv,'baby');else S.babyHuman(ctx,sit?0:b.dir,b.phase,mv,sk)}S.closedEyes=false;ctx.restore();
+ S.closedEyes=sleeping;S.happy=b.mode==='hop'||b.heart>0||b.jumpT>0;{const sk=window.babySkin?babySkin():'dog',mv=b.mode==='walk'||(!sit&&b.mode==='hop');if(sk==='dog')S.puppy(ctx,sit?0:b.dir,b.phase,mv,'baby');else S.babyHuman(ctx,sit?0:b.dir,b.phase,mv,sk)}S.closedEyes=false;S.happy=false;ctx.restore();
  const font=`900 ${T*.26}px "Yuanti SC","PingFang SC",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
  // name label
- const name=babyName(),ny=Y-sz*1.0;ctx.font=font;const nw=ctx.measureText(name).width+14;
+ const name=babyName(),ny=Y-sz*((window.babySkin&&babySkin()!=='dog')?1.8:1.0);ctx.font=font;const nw=ctx.measureText(name).width+14;
  ctx.beginPath();ctx.roundRect(X-nw/2,ny-11,nw,22,11);ctx.fillStyle='rgba(255,255,255,.92)';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#f5a623';ctx.stroke();ctx.fillStyle='#d9822b';ctx.fillText(name,X,ny+1);babyBar(X,ny+13);
  // zzz
  if(sleeping){ctx.fillStyle='#6b8fd6';ctx.font=`900 ${T*.24}px sans-serif`;for(let k=0;k<3;k++){const ph=(performance.now()/900+k/3)%1;ctx.globalAlpha=1-ph;ctx.fillText('z',X+sz*.35+ph*14,ny-6-ph*22);}ctx.globalAlpha=1}
@@ -93,7 +93,7 @@ function drawCarried(){const b=baby,p=state.player,X=p.x*T,Y=(p.y-.12)*T,sz=T*.8
  {const sk=window.babySkin?babySkin():'dog';if(sk==='dog')S.puppy(ctx,p.dir===1?1:0,b.phase,true,'baby');else{S.fussy=true;S.babyHuman(ctx,0,b.phase,true,sk);S.fussy=false}}ctx.restore();
  // arms hugging
  ctx.fillStyle=charKind==='yellow'?'#f6dfb4':'#fff';ctx.strokeStyle='#1e1a18';ctx.lineWidth=2.5;[-1,1].forEach(s=>{ctx.beginPath();ctx.ellipse(X+s*T*.26,Y-T*.32,T*.09,T*.07,0,0,7);ctx.fill();ctx.stroke()});
- const ny=Y-sz*1.05;ctx.textAlign='center';ctx.textBaseline='middle';
+ const ny=Y-sz*((window.babySkin&&babySkin()!=='dog')?1.75:1.05);ctx.textAlign='center';ctx.textBaseline='middle';
  if(b.bubT>0){ctx.font=`800 ${T*.27}px "PingFang SC",sans-serif`;const tw=ctx.measureText(b.bub).width+20,by=ny-40;ctx.globalAlpha=Math.min(1,b.bubT*2);
   ctx.beginPath();ctx.roundRect(X-tw/2,by-15,tw,30,15);ctx.moveTo(X-6,by+15);ctx.lineTo(X,by+23);ctx.lineTo(X+6,by+15);ctx.fillStyle='#fff8e7';ctx.fill();ctx.lineWidth=2.5;ctx.strokeStyle='#e0a96d';ctx.stroke();ctx.fillStyle='#7a4b1d';ctx.fillText(b.bub,X,by+1);ctx.globalAlpha=1}
  const name=babyName();ctx.font=`900 ${T*.26}px "Yuanti SC","PingFang SC",sans-serif`;const nw=ctx.measureText(name).width+14;ctx.beginPath();ctx.roundRect(X-nw/2,ny-11-T*.35,nw,22,11);ctx.fillStyle='rgba(255,255,255,.92)';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#f5a623';ctx.stroke();ctx.fillStyle='#d9822b';ctx.fillText(name,X,ny+1-T*.35);babyBar(X,ny+13-T*.35)}

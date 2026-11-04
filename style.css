@@ -91,3 +91,4 @@ body.online #menu .card>b{display:none}#title{white-space:nowrap;font-size:15px}
 .shop .skin.on{border-color:#f5a623;background:#fff6e0}.shop .skin canvas{width:72px;height:72px;image-rendering:pixelated}
 .shop .skin b{font-size:14px;color:#7a4b1d}.shop .skin span{font-size:12px;color:#b08050}
 .shop .skin button{margin-top:4px;border:0;border-radius:12px;background:#f5a623;color:#fff;font-weight:900;padding:6px 16px;font-size:14px}.shop .skin button:disabled{background:#e9d6b6}
+.shop .skin img.thumb{width:84px;height:84px;object-fit:contain}
