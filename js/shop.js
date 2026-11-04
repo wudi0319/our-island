@@ -8,15 +8,35 @@ const SKINS=[
  {id:'bib',name:'柿子围兜款',suit:'#fbf6ea',shade:'#e2d8c4',deco:'none',bib:1},
  {id:'stripe',name:'粉条纹款',suit:'#fbe3ea',shade:'#eab0c0',deco:'stripe',decoC:'#f2a9bd'}];
 const SK=Object.fromEntries(SKINS.map(s=>[s.id,s]));
-// v35: sprites cut straight from the 4 approved reference sheets (img/baby/<id>-<pose>.png)
-const POSES=['idle','move','sleep','happy','cry'],IMG={};
-for(const k of SKINS){IMG[k.id]={};for(const p of POSES){const i=new Image();i.src=`img/baby/${k.id}-${p}.png?v=35`;IMG[k.id][p]=i}}
-// unit-box draw, feet at ~.94 like S.puppy. S.fussy→crying (held struggle), S.closedEyes→sleep, S.happy→laugh
-S.babyHuman=(c,dir,phase,moving,id)=>{const set=IMG[id]||IMG.pink,fz=!!S.fussy,t=performance.now()/1000;
- const pose=fz?'cry':S.closedEyes?'sleep':S.happy?'happy':moving?'move':'idle';let im=set[pose];if(!im.complete||!im.naturalWidth)im=set.idle;if(!im.complete||!im.naturalWidth)return;
- const h=1.6,w=h*im.naturalWidth/im.naturalHeight,bob=moving&&!fz?Math.abs(Math.sin(phase))*.04:0;
- c.save();c.translate(.5,.96-bob);if(fz){c.rotate(Math.sin(t*22)*.07);c.translate(Math.sin(t*31)*.03,0);c.scale(1+Math.sin(t*17)*.03,1-Math.sin(t*17)*.03)}
- if(dir===3&&moving)c.scale(-1,1);c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';c.drawImage(im,-w/2,-h,w,h);c.restore()};
+// v36: full animated sprite sets per skin (img/baby/<id>-<frame>.png), generated from the approved sheets.
+const FR=['m0','m1','m2','m3','idle0','idle1','laugh0','laugh1','sleep0','sleep1','cry0','cry1','torso','arm','leg','eat'],IMG={};
+for(const k of SKINS){IMG[k.id]={};for(const f of FR){const i=new Image();i.src=`img/baby/${k.id}-${f}.png?v=36`;IMG[k.id][f]=i}}
+const ok=i=>i&&i.complete&&i.naturalWidth>0;
+function blit(c,im,u,ax,ay,px,py){c.drawImage(im,-px*im.naturalWidth*u+ax,-py*im.naturalHeight*u+ay,im.naturalWidth*u,im.naturalHeight*u)}
+// held: front-facing armless crying torso + 4 separate limbs on irregular circular paths, body wobble
+function struggle(c,set,u,t){const T=set.torso,A=set.arm,L=set.leg;if(!ok(T)||!ok(A)||!ok(L))return false;
+ const tw=T.naturalWidth*u,th=T.naturalHeight*u,bot=.9+Math.sin(t*13)*.02,cx=.5;
+ const ka=.42*th/(A.naturalHeight*u),kl=.46*th/(L.naturalHeight*u);
+ const limb=(im,k,sx,sy,side,base,w,ph,amp)=>{c.save();c.translate(sx+side*.035*Math.cos(t*w*1.3+ph),sy+.03*Math.sin(t*w*1.3+ph));if(side>0)c.scale(-1,1);
+  c.rotate(base+amp*Math.sin(t*w+ph)+amp*.5*Math.sin(t*w*2.3+ph*1.7));c.scale(k,k);blit(c,im,u,0,0,.72,.12);c.restore()};
+ c.save();c.translate(cx,bot);c.rotate(Math.sin(t*7.3)*.09+Math.sin(t*15.1)*.03);c.translate(-cx,-bot);
+ limb(A,ka,cx-tw*.4,bot-th*.38,-1,.5,9.1,0,.9);limb(A,ka,cx+tw*.4,bot-th*.38,1,.5,11.7,2.1,.9);
+ c.save();c.translate(cx,bot);c.scale(1+Math.sin(t*17)*.02,1-Math.sin(t*17)*.02);blit(c,T,u,0,0,.5,1);c.restore();
+ limb(L,kl,cx-tw*.2,bot-th*.08,-1,.2,7.3,1,.75);limb(L,kl,cx+tw*.2,bot-th*.08,1,.2,13.2,3.3,.75);
+ c.restore();return true}
+// unit-box draw, feet at ~.96. Flags: S.fussy (held), S.closedEyes (sleep), S.happy (laugh), S.eating, S.cry
+S.babyHuman=(c,dir,phase,moving,id)=>{const set=IMG[id]||IMG.pink,t=performance.now()/1000;if(!ok(set.idle0))return;const u=1.6/set.idle0.naturalHeight;
+ if(S.fussy&&ok(set.torso)&&struggle(c,set,.95/set.torso.naturalHeight,t))return;
+ let f,flip=false,br=0;
+ if(S.fussy||S.cry)f=t%1<.5?'cry0':'cry1';
+ else if(S.closedEyes){f=t%2.4<1.2?'sleep0':'sleep1';br=.02*Math.sin(t*2.6)}
+ else if(S.eating)f='eat';
+ else if(S.happy)f=t%.5<.25?'laugh0':'laugh1';
+ else if(moving){f='m'+(Math.floor(phase*.55)%4);flip=dir===2}
+ else{f=t%3.2<.16?'idle1':'idle0';br=.015*Math.sin(t*2.2)}
+ let im=set[f];if(!ok(im))im=set.idle0;
+ c.save();c.translate(.5,.96);if(S.fussy)c.rotate(Math.sin(t*22)*.07);if(flip)c.scale(-1,1);c.scale(1-br*.5,1+br);
+ c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';blit(c,im,u,0,0,.5,1);c.restore()};
 // ---- shared state helpers ----
 const st=()=>{const s=Game.state;s.skins=s.skins||{own:{},cur:'dog'};s.skins.own=s.skins.own||{};return s.skins};
 window.babySkin=()=>{const s=Game.state.skins;return s&&s.cur&&SK[s.cur]&&s.own&&s.own[s.cur]?s.cur:'dog'};
@@ -28,7 +48,7 @@ function buy(id){const s=st();if(s.own[id])return equip(id);const have=foodTotal
 function equip(id){const s=st();if(id!=='dog'&&!s.own[id])return;s.cur=id;s.at=Date.now();Game.save();render();Game.toast(id==='dog'?'胖宝换回小狗装啦🐶':'胖宝换上了'+SK[id].name+'✨')}
 // ---- UI (inside house rooms) ----
 const el=document.createElement('div');el.id='shop';document.querySelector('#house .emptyRoom').replaceWith(el);el.className='emptyRoom shop';
-function thumb(id){const c=document.createElement('canvas');c.width=c.height=96;const g=c.getContext('2d');g.scale(96,96);if(id==='dog')S.puppy(g,0,0,false,'baby');else{const i=document.createElement('img');i.src=`img/baby/${id}-happy.png?v=35`;i.className='thumb';return i}return c}
+function thumb(id){const c=document.createElement('canvas');c.width=c.height=96;const g=c.getContext('2d');g.scale(96,96);if(id==='dog')S.puppy(g,0,0,false,'baby');else{const i=document.createElement('img');i.src=`img/baby/${id}-laugh0.png?v=36`;i.className='thumb';return i}return c}
 function render(){const s=st(),cur=babySkin(),have=foodTotal();
  el.innerHTML=`<h3>🔮 神秘商店</h3><p class="sub">用 ${PRICE} 个任意食物兑换胖宝皮肤（现有 ${have} 个）· 两个人看到的胖宝一样哦</p><div class="skins"></div>`;
  const box=el.querySelector('.skins');
