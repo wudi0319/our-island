@@ -102,9 +102,15 @@ function dockErr(x,y){if(!inb(x,y)||x<1||y<1||x>W-2||y>H-2)return'这里放不�
  if(!Object.values(state.obj).includes('dockhut'))return'先在水边造一个码头小屋吧';const ch=dockChain();
  if(!N4.some(([a,b])=>inb(x+a,y+b)&&ch.has(idx(x+a,y+b))))return'码头板要接在码头小屋的码头上';
  if((state.inv.wood||0)<DOCK_WOOD)return'造码头板需要'+DOCK_WOOD+'块木头，去砍树吧🪓';return null}
-function hutPlank(x,y){const p=state.player,f=[[0,1],[0,-1],[-1,0],[1,0]][p.dir];for(const[a,b]of[f,...N4])if(isWater(x+a,y+b)&&!objAt(x+a,y+b))return[x+a,y+b];return null}
+// v41: hut comes with 2 planks; at least one plank must touch walkable land (not the hut) so you can walk on
+function hutPlank(x,y){const p=state.player,f=[[0,1],[0,-1],[-1,0],[1,0]][p.dir],hi=idx(x,y),free=(a,b)=>isWater(a,b)&&!objAt(a,b);
+ const walk=(a,b)=>inb(a,b)&&idx(a,b)!==hi&&state.ter[idx(a,b)]!==WATER&&!SOLID[objAt(a,b)]&&occ[idx(a,b)]==null;
+ const touches=(a,b)=>N4.some(([u,v])=>walk(a+u,b+v));
+ for(const[a,b]of[f,...N4]){const P=[x+a,y+b];if(!free(...P))continue;
+  // second plank: sideways first (parallel to the shore), then straight out
+  for(const[u,v]of[[b,a],[-b,-a],[a,b]]){const Q=[P[0]+u,P[1]+v];if(idx(...Q)===hi||!free(...Q))continue;if(touches(...P)||touches(...Q))return[P,Q]}}return null}
 function hutErr(x,y){if(!inb(x,y)||x<1||y<1||x>W-2||y>H-2)return'这里放不下';const i=idx(x,y),p=state.player;if(state.ter[i]===WATER)return'码头小屋要造在岸上哦';
- if(state.obj[i]||state.crops[i]||state.ter[i]===SOIL||occ[i]!=null)return'这里放不下';if(!N4.some(([a,b])=>isWater(x+a,y+b)))return'码头小屋要造在水边哦';if(!hutPlank(x,y))return'旁边的水面被占了';
+ if(state.obj[i]||state.crops[i]||state.ter[i]===SOIL||occ[i]!=null)return'这里放不下';if(!N4.some(([a,b])=>isWater(x+a,y+b)))return'码头小屋要造在水边哦';if(!hutPlank(x,y))return'水边要有2格空水面、还要能从岸上走上去哦';
  if(idx(Math.floor(p.x),Math.floor(p.y))===i)return'离太近啦，退后一点';state.obj[i]='dockhut';const ok=canStand(p.x,p.y);delete state.obj[i];return ok?null:'离太近啦，退后一点'}
 const pErr=q=>q.k==='dock'?dockErr(q.x,q.y):q.k==='dockhut'?hutErr(q.x,q.y):bigErr(q.x,q.y,q.k);
 function actAt(x,y){if(!inb(x,y))return;const i=idx(x,y);
@@ -119,7 +125,7 @@ function actAt(x,y){if(!inb(x,y))return;const i=idx(x,y);
  case'basket':if(!c||c.stage<2)return toast('还没成熟呢');state.inv[c.type]++;toast('收获 '+CROPS[c.type].name+' +1');delete state.crops[i];break;
  case'axe':if(o!=='tree')return toast('前面没有树');delete state.obj[i];state.inv.wood=(state.inv.wood||0)+3;toast('木头 +3');break;
  case'dock':{const er=dockErr(x,y);if(er)return toast(er);state.obj[i]='dock';state.inv.wood-=DOCK_WOOD;toast('码头造好啦（木头 -'+DOCK_WOOD+'）');break}
- case'dockhut':{const er=hutErr(x,y);if(er)return toast(er);const[px,py]=hutPlank(x,y);state.obj[i]='dockhut';state.obj[idx(px,py)]='dock';toast('码头小屋造好啦！还送了一片码头板 ⚓');break}
+ case'dockhut':{const er=hutErr(x,y);if(er)return toast(er);const pl=hutPlank(x,y);state.obj[i]='dockhut';for(const[a,b]of pl)state.obj[idx(a,b)]='dock';toast('码头小屋造好啦！还送了2片码头板 ⚓');break}
  case'erase':if(o==='dockhut'){const ch=dockChain(i),other=dockChain();delete state.obj[i];const rest=dockChain(),pt=idx(Math.floor(p.x),Math.floor(p.y));state.obj[i]='dockhut';const gone=[...ch].filter(j=>!rest.has(j));
   if(gone.includes(pt))return toast('先回到岸上再拆码头小屋哦');if(!(window.__autoConfirm||confirm('拆掉码头小屋会连着拆掉它的'+gone.length+'片码头板，鱼篓和图鉴都会保留。确定吗？')))return;delete state.obj[i];gone.forEach(j=>delete state.obj[j]);toast('码头小屋拆掉了（鱼篓和图鉴还在）');break}
   if(o==='dock'){const pt=idx(Math.floor(p.x),Math.floor(p.y));delete state.obj[i];if(pt===i||!canStand(p.x,p.y)){state.obj[i]='dock';return toast('先离开这块码头再拆哦')}toast('码头拆掉了');break}if(o){delete state.obj[i];if(state.fhp)delete state.fhp[i]}else if(c)delete state.crops[i];else if(t===SOIL)state.ter[i]=GRASS;else return;break;
@@ -165,7 +171,7 @@ function draw(){frame++;const p=state.player;
   window.drawOthers&&drawOthers(y);window.animalsDraw&&animalsDraw(y);window.intrDraw&&intrDraw(y);
   if(y===py){ctx.save();ctx.translate((p.x-.7)*T,(p.y-1.2)*T);ctx.scale(T*1.4,T*1.4);S.puppy(ctx,p.dir,phase,moving,charKind);ctx.restore();if(typeof baby!=='undefined'&&baby.carried)babyDraw()}}
  
- if(prev&&(prev.k==='dock'||prev.k==='dockhut')){const hut=prev.k==='dockhut',er=hut?hutErr(prev.x,prev.y):dockErr(prev.x,prev.y),ok=!er,X=prev.x*T,Y=prev.y*T;ctx.save();ctx.globalAlpha=.55;if(hut){S.dockhut&&sprite(S.dockhut,prev.x,prev.y);const pl=!er&&hutPlank(prev.x,prev.y);if(pl)dockTile(pl[0],pl[1])}else window.dockTile&&dockTile(prev.x,prev.y);ctx.restore();ctx.fillStyle=ok?'rgba(80,220,110,.35)':'rgba(255,70,70,.38)';ctx.strokeStyle=ok?'#2fa84f':'#e03b3b';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(X,Y,T,T,8);ctx.fill();ctx.stroke();
+ if(prev&&(prev.k==='dock'||prev.k==='dockhut')){const hut=prev.k==='dockhut',er=hut?hutErr(prev.x,prev.y):dockErr(prev.x,prev.y),ok=!er,X=prev.x*T,Y=prev.y*T;ctx.save();ctx.globalAlpha=.55;if(hut){S.dockhut&&sprite(S.dockhut,prev.x,prev.y);const pl=!er&&hutPlank(prev.x,prev.y);if(pl)pl.forEach(([a,b])=>dockTile(a,b))}else window.dockTile&&dockTile(prev.x,prev.y);ctx.restore();ctx.fillStyle=ok?'rgba(80,220,110,.35)':'rgba(255,70,70,.38)';ctx.strokeStyle=ok?'#2fa84f':'#e03b3b';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(X,Y,T,T,8);ctx.fill();ctx.stroke();
   ctx.font='900 13px sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.lineWidth=4;ctx.strokeStyle='#fff';const m=ok?'✓ 可以造':'✗ '+er;ctx.strokeText(m,X+T/2,Y-4);ctx.fillStyle=ok?'#1f7a3a':'#c02020';ctx.fillText(m,X+T/2,Y-4)}
  else if(prev){const ok=!bigErr(prev.x,prev.y,prev.k);ctx.fillStyle=ok?'rgba(80,220,110,.35)':'rgba(255,70,70,.38)';ctx.strokeStyle=ok?'#2fa84f':'#e03b3b';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect((prev.x-1)*T,(prev.y-3)*T,4*T,4*T,12);ctx.fill();ctx.stroke();
   ctx.save();ctx.globalAlpha=.6;ctx.translate((prev.x-1.6)*T,(prev.y-2.99)*T);ctx.scale(T*4.2,T*4.2);S[prev.k](ctx);ctx.restore()}
