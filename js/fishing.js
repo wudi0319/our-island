@@ -1,4 +1,4 @@
-// v38: 钓鱼 — fixed wooden dock on the south shore. Stand on it -> 钓鱼 (3 food per cast).
+// v40: 钓鱼 — build a 码头小屋 (auto plank), extend planks. Stand on it -> 钓鱼 (3 food per cast).
 // Island-level shared state: state.fishN={id:count} (counters, merged additively like inv), state.fishDex={id:{by,at}} (first catch).
 (()=>{
 const COST=3,FOODS=['carrot','tomato','strawberry'];
@@ -20,24 +20,16 @@ const FISH=[
  {id:'lobster',n:'龙虾',t:3,sh:'lobster',a:'#d0382a',b:'#ff8a6a'},
  {id:'koi',n:'金色锦鲤',t:4,sh:'fish',a:'#f5b400',b:'#fff3b0',koi:1,big:1}];
 const FM=Object.fromEntries(FISH.map(f=>[f.id,f]));
-// ---- dock: from island centre go south to the first water tile, dock = 3 water tiles there ----
-let dock=[],dockDir=1;
-function calcDock(){dock=[];let best=null;
- for(const sx of[0,-1,1,-2,2,-3,3,-4,4,-5,5,-6,6,-8,8,-10,10])for(const dirY of[1,-1]){const x=W/2+sx;let y=H/2;while(y>1&&y<H-2&&ter(x,y)!==WATER)y+=dirY;
-  if(ter(x,y-dirY)===WATER)continue;let ok=ter(x,y)===WATER,n=0;for(let yy=y;yy>=0&&yy<H;yy+=dirY){n++;if(ter(x,yy)!==WATER)ok=false}if(n<4)ok=false;
-  const d=Math.abs(y-H/2)+Math.abs(sx)*.5;if(ok&&(!best||d<best.d))best={x,y,dirY,d}}
- if(!best)best={x:W/2,y:H-6,dirY:1};
- for(let k=0;k<3;k++)dock.push([best.x,best.y+k*best.dirY]);dockDir=best.dirY}
-calcDock();
-window.isDock=(x,y)=>dock.some(d=>d[0]===x&&d[1]===y)||x>=0&&y>=0&&x<W&&y<H&&Game.state.obj[y*W+x]==='dock';
+// v40: no fixed dock any more — docks are built (码头小屋 + 码头板 in state.obj)
+const dock=[];
+window.isDock=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&Game.state.obj[y*W+x]==='dock';
 const onDock=()=>{const p=Game.state.player;return isDock(Math.floor(p.x),Math.floor(p.y))};
 window.dockTile=(x,y)=>{const X=x*T,Y=y*T;
   ctx.fillStyle='#6b4a32';for(const px of[.12,.8])ctx.fillRect(X+px*T,Y+T*.75,T*.1,T*.4);
   ctx.fillStyle='#c98f55';ctx.fillRect(X+T*.08,Y,T*.84,T);ctx.strokeStyle='#6b4a32';ctx.lineWidth=2;
   for(let k=0;k<4;k++){ctx.fillStyle=k%2?'#b97f48':'#d59d62';ctx.fillRect(X+T*.08,Y+k*T/4,T*.84,T/4-1);ctx.beginPath();ctx.moveTo(X+T*.08,Y+(k+1)*T/4-.5);ctx.lineTo(X+T*.92,Y+(k+1)*T/4-.5);ctx.stroke()}
   ctx.strokeRect(X+T*.08,Y,T*.84,T);ctx.fillStyle='#5a3a24';for(const px of[.2,.78])for(let k=0;k<4;k++)ctx.fillRect(X+px*T,Y+k*T/4+T*.1,2,2)};
-window.dockDraw=()=>{for(const[x,y]of dock)dockTile(x,y);const o=Game.state.obj;for(const k in o)if(o[k]==='dock')dockTile(k%W,k/W|0);
- const[x,y]=dock[dock.length-1];ctx.fillStyle='#6b4a32';ctx.fillRect(x*T+T*.08,(dockDir>0?y+1:y)*T-3,T*.84,6)};
+window.dockDraw=()=>{const o=Game.state.obj;for(const k in o)if(o[k]==='dock')dockTile(k%W,k/W|0)};
 // ---- shared state ----
 const fs=()=>{const s=Game.state;s.fishN=s.fishN||{};s.fishDex=s.fishDex||{};return s};
 const foodTotal=()=>FOODS.reduce((n,k)=>n+(Game.state.inv[k]||0),0);
@@ -82,7 +74,7 @@ function gauge(){const c=document.getElementById('fGauge'),g=c.getContext('2d'),
  const a=rad(F.needle);g.lineCap='round';g.lineWidth=6;g.strokeStyle='#3b2a20';g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.cos(a)*(R+8),cy+Math.sin(a)*(R+8));g.stroke();
  g.fillStyle='#3b2a20';g.beginPath();g.arc(cx,cy,10,0,7);g.fill()}
 // rod + bobber in world
-function bobAt(){const p=Game.state.player,px=Math.floor(p.x),py=Math.floor(p.y);if(dock.some(d=>d[0]===px&&d[1]===py)){const[dx,dy]=dock[dock.length-1];return[(dx+.5)*T,(dy+.5+dockDir*1.3)*T]}
+function bobAt(){const p=Game.state.player,px=Math.floor(p.x),py=Math.floor(p.y);
  const D=[[0,1],[0,-1],[-1,0],[1,0]],f=D[p.dir],L=[f,...D];for(const[a,b]of L)if(ter(px+a,py+b)===WATER&&!isDock(px+a,py+b))return[(px+.5+a*1.3)*T,(py+.5+b*1.3)*T];return[(px+.5)*T,(py+1.8)*T]}
 window.fishDraw=()=>{if(F.st==='idle'||F.st==='fight'&&false)return;const p=Game.state.player,[cx,cy]=camXY();ctx.setTransform(dpr,0,0,dpr,-Math.round(cx*dpr),-Math.round(cy*dpr));
  const[bx,by]=bobAt(),t=performance.now()/1000;let k=1;if(F.st==='cast')k=1-F.t/.7;
@@ -105,7 +97,7 @@ function icon(f,px,sil){const c=document.createElement('canvas');c.width=c.heigh
 // ---- 鱼篓 / 图鉴 ----
 let tab='bag';
 function renderBag(){const s=fs(),tot=Object.values(s.fishN).reduce((a,b)=>a+b,0),got=Object.keys(s.fishDex).filter(k=>FM[k]).length;
- bag.innerHTML=`<div class="card"><b class="dockT">⚓ 码头</b><div class="tabs"><button data-tab="bag" class="${tab==='bag'?'on':''}">🧺 鱼篓（${tot}）</button><button data-tab="dex" class="${tab==='dex'?'on':''}">📖 图鉴 ${got}/${FISH.length}</button></div><div class="fgrid"></div>${onDock()&&F.st==='idle'?'<button id="bagFish">🎣 在这里钓鱼（'+COST+'个食物）</button>':'<p class="fHint">站到码头上就能钓鱼</p>'}<button id="bagClose">好的</button></div>`;
+ bag.innerHTML=`<div class="card"><b class="dockT">⚓ 码头小屋</b><div class="tabs"><button data-tab="bag" class="${tab==='bag'?'on':''}">🧺 鱼篓（${tot}）</button><button data-tab="dex" class="${tab==='dex'?'on':''}">📖 图鉴 ${got}/${FISH.length}</button></div><div class="fgrid"></div>${onDock()&&F.st==='idle'?'<button id="bagFish">🎣 在这里钓鱼（'+COST+'个食物）</button>':'<p class="fHint">站到码头板上就能钓鱼</p>'}<button id="bagClose">好的</button></div>`;
  const grid=bag.querySelector('.fgrid');
  if(tab==='bag'){const own=FISH.filter(f=>s.fishN[f.id]>0);if(!own.length)grid.innerHTML='<p class="empty">鱼篓还是空的，去码头钓鱼吧 🎣</p>';
   for(const f of own){const d=document.createElement('div');d.className='fc';d.appendChild(icon(f,48));d.insertAdjacentHTML('beforeend',`<b>${f.n}</b><span style="color:${TIERS[f.t].c}">${TIERS[f.t].k}</span><em>×${s.fishN[f.id]}</em>`);grid.appendChild(d)}}

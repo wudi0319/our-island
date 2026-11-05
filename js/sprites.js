@@ -145,3 +145,15 @@ S.canteen=c=>{const sh=(x,y,rx,ry)=>{c.beginPath();c.ellipse(x,y,rx,ry,0,0,7);c.
 S.canteenIcon=c=>{c.save();c.translate(.02,.12);c.scale(.96,.86);S.canteen(c);c.restore()};
 
 S.dockIcon=c=>{c.fillStyle='#9fd6e0';c.fillRect(.05,.55,.9,.4);c.fillStyle='#6b4a32';c.fillRect(.22,.5,.08,.42);c.fillRect(.7,.5,.08,.42);for(let k=0;k<3;k++){c.fillStyle=k%2?'#b97f48':'#d59d62';c.fillRect(.12,.2+k*.12,.76,.11)}c.lineWidth=.05;c.strokeStyle=OL;c.strokeRect(.12,.2,.76,.36)};
+// v40 码头小屋: chunky pixel hut (12x17 px grid in a 1x1 unit box)
+S.dockhut=c=>{const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x/12,y/17,w/12+.002,h/17+.002)};
+ c.fillStyle='rgba(60,40,20,.25)';c.beginPath();c.ellipse(.5,.97,.46,.05,0,0,7);c.fill();
+ P(5,0,1,3,'#6b4a32');P(6,0,3,2,'#ff6b6b');P(6,1,2,1,'#ffd23f'); // flag
+ P(2,3,8,1,'#3b2a20');P(1,4,10,1,'#3b2a20');P(0,5,12,1,'#3b2a20'); // roof outline
+ P(2,4,8,1,'#5ab8f0');P(1,5,10,1,'#3fa0e0');P(0,6,12,2,'#5ab8f0');P(0,7,12,1,'#3b88c8');for(let k=0;k<6;k++)P(k*2,6,1,1,'#fff');
+ P(1,8,10,8,'#3b2a20');P(2,8,8,7,'#e8b27a');for(let y=9;y<15;y+=2)P(2,y,8,1,'#d59d62');
+ P(3,9,3,3,'#3b2a20');P(4,10,1,1,'#bfe9f5');P(3.5,9.5,2,2,'#9fd6e0');P(4.3,9.8,.7,.7,'#fff'); // round-ish window
+ P(7,10,3,5,'#3b2a20');P(7.5,10.5,2,4.5,'#a5683c');P(9,12.5,.5,.5,'#ffd23f'); // door
+ P(2.4,12.6,1.6,1.6,'#ff9ab0');P(4.6,13,1.2,1.2,'#ff9ab0'); // little fish-shaped buoys
+ P(0,15,12,1.6,'#6b4a32');P(1,15.3,10,.6,'#8a5f3c')};
+S.dockhutIcon=c=>{c.save();c.translate(.18,.02);c.scale(.64,.96);S.dockhut(c);c.restore()};
