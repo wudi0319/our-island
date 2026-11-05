@@ -92,3 +92,18 @@ body.online #menu .card>b{display:none}#title{white-space:nowrap;font-size:15px}
 .shop .skin b{font-size:14px;color:#7a4b1d}.shop .skin span{font-size:12px;color:#b08050}
 .shop .skin button{margin-top:4px;border:0;border-radius:12px;background:#f5a623;color:#fff;font-weight:900;padding:6px 16px;font-size:14px}.shop .skin button:disabled{background:#e9d6b6}
 .shop .skin img.thumb{width:84px;height:84px;object-fit:contain}
+#fishBtn{position:absolute;right:16px;bottom:246px;z-index:5;border:3px solid #fff;background:#5cc8ea;color:#fff;font-weight:900;font-size:16px;border-radius:20px;padding:10px 16px;box-shadow:0 4px 0 #2f9cc0;text-shadow:0 1px 0 #2f9cc0}
+#fishUI{position:fixed;inset:0;z-index:21;background:rgba(0,40,60,.35);display:flex;align-items:flex-end;justify-content:center;padding-bottom:120px}
+#fishUI .card{background:#fff8e7;border:3px solid #6b4a32;border-radius:22px;padding:14px;width:320px;text-align:center;color:#7a4b1d}
+#fishUI canvas{width:300px;height:170px;display:block;margin:6px auto 0}
+#fDots{display:flex;justify-content:center;gap:6px;margin:6px 0}#fDots i{width:14px;height:14px;border-radius:50%;border:2px solid #6b4a32;background:#fff}#fDots i.on{background:#5cb85c}
+#fishUI .fHint{font-size:12px;margin:2px 0 8px;color:#b08050}
+#fReel{border:3px solid #fff;background:#ff6b5a;color:#fff;font-weight:900;font-size:22px;border-radius:22px;padding:12px 44px;box-shadow:0 5px 0 #c8443a}#fReel:active{transform:translateY(3px);box-shadow:0 2px 0 #c8443a}
+#bagBtn{position:absolute;left:12px;bottom:200px;z-index:5;border:3px solid #fff;background:#fff8e7;color:#7a4b1d;font-weight:900;font-size:14px;border-radius:18px;padding:7px 12px;box-shadow:0 3px 0 #e0c9a0}
+#fishBag{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center}
+#fishBag .card{background:#fff8e7;border:3px solid #6b4a32;border-radius:20px;padding:14px;width:330px;max-height:80vh;overflow:auto;text-align:center;color:#7a4b1d}
+#fishBag .tabs{display:flex;gap:6px;margin-bottom:10px}#fishBag .tabs button{flex:1;border:2px solid #f0d6ae;background:#fff;border-radius:12px;padding:7px;font-weight:900;color:#7a4b1d}#fishBag .tabs button.on{background:#ffd23f;border-color:#e0a020}
+.fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.fgrid .empty{grid-column:1/-1}
+.fc{background:#fff;border:2px solid #f0d6ae;border-radius:12px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;font-size:12px}.fc.no{opacity:.75}.fc b{font-size:13px}.fc em{font-style:normal;font-weight:900}.fc small{font-size:10px;color:#b08050}
+.ficon{image-rendering:pixelated;width:48px;height:48px}
+#bagClose{margin-top:10px;border:0;border-radius:12px;background:#f5a623;color:#fff;font-weight:900;padding:8px 22px}

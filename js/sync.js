@@ -3,7 +3,7 @@
 const SB_URL='https://api.pangzaixiaodao.party',SB_KEY='sb_publishable_DqsCbDSeAxe26HP8XWFPIw_nCulbx0z';
 const K_AUTH='our-island-auth',K_BAK='our-island-backup',K_BASE='our-island-cloud-base';
 const ROLES={jimao:{name:'鸡毛',char:'yellow'},xiaobai:{name:'小白',char:'white'}};
-const GAME=['js/sprites.js','js/game.js','js/baby.js','js/info.js','js/animals.js','js/intruders.js','js/shop.js'],VER='37';
+const GAME=['js/sprites.js','js/game.js','js/baby.js','js/info.js','js/animals.js','js/intruders.js','js/shop.js','js/fishing.js'],VER='38';
 const L=LocalStore,J=JSON.stringify,$=id=>document.getElementById(id);
 let sb=null;try{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}})}catch(e){console.warn('supabase lib',e)}
 let auth=null;try{auth=JSON.parse(localStorage.getItem(K_AUTH))}catch(e){}
@@ -25,12 +25,12 @@ function backup(){const raw=localStorage.getItem(L.key);if(raw&&!localStorage.ge
 const isObj=x=>x&&typeof x==='object'&&!Array.isArray(x);
 function m3(b,l,r,add){if(J(l)===J(b))return clone(r);if(J(r)===J(b))return clone(l);
  if(add&&typeof l==='number'&&typeof r==='number')return Math.max(0,+(l+r-(typeof b==='number'?b:0)).toFixed(2)); // counters: both phones' changes add up
- if(J(l)===J(r)&&!add&&!(isObj(l)&&l.inv&&J(l.inv)!==J(isObj(b)?b.inv:undefined)))return clone(l); // same edit on both phones -> keep once (except counters, which add up)
+ if(J(l)===J(r)&&!add&&!(isObj(l)&&(l.inv&&J(l.inv)!==J(isObj(b)?b.inv:undefined)||l.fishN&&J(l.fishN)!==J(isObj(b)?b.fishN:undefined))))return clone(l); // same edit on both phones -> keep once (except counters, which add up)
  if(Array.isArray(l)&&Array.isArray(r)){
   if([...l,...r].every(x=>isObj(x)&&x.id!=null)){const B={},Lm={},R={};(Array.isArray(b)?b:[]).forEach(x=>x&&(B[x.id]=x));l.forEach(x=>Lm[x.id]=x);r.forEach(x=>R[x.id]=x);
    const ids=[...r.map(x=>x.id),...l.map(x=>x.id).filter(i=>!(i in R))],out=[];for(const id of ids){const v=m3(B[id],Lm[id],R[id]);if(v!==undefined)out.push(v)}return out}
   if(Array.isArray(b)&&b.length===l.length&&l.length===r.length)return l.map((x,i)=>m3(b[i],x,r[i]));return clone(l)}
- if(isObj(l)&&isObj(r)){const B=isObj(b)?b:{},o={};for(const k of new Set([...Object.keys(r),...Object.keys(l)])){const v=m3(B[k],l[k],r[k],add||k==='inv');if(v!==undefined)o[k]=v}return o}
+ if(isObj(l)&&isObj(r)){const B=isObj(b)?b:{},o={};for(const k of new Set([...Object.keys(r),...Object.keys(l)])){const v=m3(B[k],l[k],r[k],add||k==='inv'||k==='fishN');if(v!==undefined)o[k]=v}return o}
  return clone(l)}
 window.IslandMerge=m3;
 

@@ -53,7 +53,7 @@ Store.subscribe(s=>{if(s&&s.v===2){state=s;rebuildOcc()}});migrate();
 // ---- helpers ----
 const idx=(x,y)=>y*W+x,inb=(x,y)=>x>=0&&y>=0&&x<W&&y<H;
 const ter=(x,y)=>inb(x,y)?state.ter[idx(x,y)]:WATER;
-const blocked=(x,y)=>{if(!inb(x,y))return true;const i=idx(x,y);return state.ter[i]===WATER||SOLID[state.obj[i]]||occ[i]!=null||state.obj[i]==='gate'&&!gateNear(i)};
+const blocked=(x,y)=>{if(!inb(x,y))return true;const i=idx(x,y);if(window.isDock&&isDock(x,y))return false;return state.ter[i]===WATER||SOLID[state.obj[i]]||occ[i]!=null||state.obj[i]==='gate'&&!gateNear(i)};
 // gates open when any dog (me or the other online pup) is within ~1.5 tiles
 function dogs(){const L=[state.player],o=window.Sync&&Sync.others;if(o)for(const k in o){const d=o[k];if(d.here&&d.x!=null&&Date.now()-d.t<20000)L.push(d)}return L}
 function gateNear(i){const x=i%W+.5,y=(i/W|0)+.5;return dogs().some(d=>Math.hypot(d.x-x,d.y-y)<1.6)||!!(window.gateDriven&&gateDriven(i))}
@@ -129,6 +129,7 @@ function draw(){frame++;const p=state.player;
  const x0=Math.max(0,cx/T|0),y0=Math.max(0,cy/T|0),x1=Math.min(W-1,(cx+vw)/T|0),y1=Math.min(H-1,(cy+vh)/T|0);
  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)drawTile(x,y,state.ter[idx(x,y)]);
  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)drawShore(x,y,state.ter[idx(x,y)]);
+ window.dockDraw&&dockDraw();
  // objects + player sorted by row
  const py=Math.floor(p.y);
  for(let y=Math.max(0,y0-1);y<=Math.min(H-1,y1+1);y++){
@@ -148,7 +149,7 @@ function draw(){frame++;const p=state.player;
   ctx.save();ctx.globalAlpha=.6;ctx.translate((prev.x-1.6)*T,(prev.y-2.99)*T);ctx.scale(T*4.2,T*4.2);S[prev.k](ctx);ctx.restore()}
  }
 let last=performance.now();
-function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);gatesUpdate(dt);window.animalsUpdate&&animalsUpdate(dt);window.intrUpdate&&intrUpdate(dt);window.babyUpdate&&babyUpdate(dt);draw();window.intrOverlay&&intrOverlay();if(dirty&&now-lastSave>2000){lastSave=now;save()}requestAnimationFrame(loop)}
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);gatesUpdate(dt);window.animalsUpdate&&animalsUpdate(dt);window.intrUpdate&&intrUpdate(dt);window.babyUpdate&&babyUpdate(dt);draw();window.fishDraw&&fishDraw();window.intrOverlay&&intrOverlay();if(dirty&&now-lastSave>2000){lastSave=now;save()}requestAnimationFrame(loop)}
 
 const plaque=(x,y,name)=>{const w=Math.max(1.1,Math.min(2.4,.3*Array.from(name).length+.45)),h=.5;return{x:x+.5-w/2,y:y-1.98,w,h}};
 function drawSign(x,y,name){const q=plaque(x,y,name),sx=q.x*T,sy=q.y*T,w=q.w*T,h=q.h*T;
