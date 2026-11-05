@@ -143,3 +143,5 @@ S.canteen=c=>{const sh=(x,y,rx,ry)=>{c.beginPath();c.ellipse(x,y,rx,ry,0,0,7);c.
  c.beginPath();c.moveTo(.42,.0);c.lineTo(.56,-.08);c.moveTo(.47,.0);c.lineTo(.6,-.06);c.lineWidth=.025;c.stroke();
  circ(c,.5,.13,.025,'#f7b2c0',false)};
 S.canteenIcon=c=>{c.save();c.translate(.02,.12);c.scale(.96,.86);S.canteen(c);c.restore()};
+
+S.dockIcon=c=>{c.fillStyle='#9fd6e0';c.fillRect(.05,.55,.9,.4);c.fillStyle='#6b4a32';c.fillRect(.22,.5,.08,.42);c.fillRect(.7,.5,.08,.42);for(let k=0;k<3;k++){c.fillStyle=k%2?'#b97f48':'#d59d62';c.fillRect(.12,.2+k*.12,.76,.11)}c.lineWidth=.05;c.strokeStyle=OL;c.strokeRect(.12,.2,.76,.36)};

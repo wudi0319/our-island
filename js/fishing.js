@@ -29,13 +29,14 @@ function calcDock(){dock=[];let best=null;
  if(!best)best={x:W/2,y:H-6,dirY:1};
  for(let k=0;k<3;k++)dock.push([best.x,best.y+k*best.dirY]);dockDir=best.dirY}
 calcDock();
-window.isDock=(x,y)=>dock.some(d=>d[0]===x&&d[1]===y);
+window.isDock=(x,y)=>dock.some(d=>d[0]===x&&d[1]===y)||x>=0&&y>=0&&x<W&&y<H&&Game.state.obj[y*W+x]==='dock';
 const onDock=()=>{const p=Game.state.player;return isDock(Math.floor(p.x),Math.floor(p.y))};
-window.dockDraw=()=>{for(const[x,y]of dock){const X=x*T,Y=y*T;
+window.dockTile=(x,y)=>{const X=x*T,Y=y*T;
   ctx.fillStyle='#6b4a32';for(const px of[.12,.8])ctx.fillRect(X+px*T,Y+T*.75,T*.1,T*.4);
   ctx.fillStyle='#c98f55';ctx.fillRect(X+T*.08,Y,T*.84,T);ctx.strokeStyle='#6b4a32';ctx.lineWidth=2;
   for(let k=0;k<4;k++){ctx.fillStyle=k%2?'#b97f48':'#d59d62';ctx.fillRect(X+T*.08,Y+k*T/4,T*.84,T/4-1);ctx.beginPath();ctx.moveTo(X+T*.08,Y+(k+1)*T/4-.5);ctx.lineTo(X+T*.92,Y+(k+1)*T/4-.5);ctx.stroke()}
-  ctx.strokeRect(X+T*.08,Y,T*.84,T);ctx.fillStyle='#5a3a24';for(const px of[.2,.78])for(let k=0;k<4;k++)ctx.fillRect(X+px*T,Y+k*T/4+T*.1,2,2)}
+  ctx.strokeRect(X+T*.08,Y,T*.84,T);ctx.fillStyle='#5a3a24';for(const px of[.2,.78])for(let k=0;k<4;k++)ctx.fillRect(X+px*T,Y+k*T/4+T*.1,2,2)};
+window.dockDraw=()=>{for(const[x,y]of dock)dockTile(x,y);const o=Game.state.obj;for(const k in o)if(o[k]==='dock')dockTile(k%W,k/W|0);
  const[x,y]=dock[dock.length-1];ctx.fillStyle='#6b4a32';ctx.fillRect(x*T+T*.08,(dockDir>0?y+1:y)*T-3,T*.84,6)};
 // ---- shared state ----
 const fs=()=>{const s=Game.state;s.fishN=s.fishN||{};s.fishDex=s.fishDex||{};return s};
@@ -48,7 +49,6 @@ const btn=document.createElement('button');btn.id='fishBtn';btn.className='hidde
 const ui=document.createElement('div');ui.id='fishUI';ui.className='hidden';
 ui.innerHTML='<div class="card"><b id="fTitle">有鱼上钩！</b><canvas id="fGauge" width="300" height="170"></canvas><div id="fDots"></div><p class="fHint">指针扫到红色区域时点「收线」</p><button id="fReel">收线</button></div>';document.body.appendChild(ui);
 const bag=document.createElement('div');bag.id='fishBag';bag.className='hidden';document.body.appendChild(bag);
-const bagBtn=document.createElement('button');bagBtn.id='bagBtn';bagBtn.textContent='🐟 鱼篓';document.querySelector('main').appendChild(bagBtn);
 function rollTier(){let r=Math.random()*100;for(let i=0;i<TIERS.length;i++){if(r<TIERS[i].p)return i;r-=TIERS[i].p}return 0}
 function cast(){if(F.st!=='idle')return;if(!onDock())return Game.toast('要站在码头上才能钓鱼哦');const have=foodTotal();
  if(have<COST)return Game.toast(`食物不够啦，钓一次要${COST}个食物（现在${have}个）`);
@@ -82,8 +82,10 @@ function gauge(){const c=document.getElementById('fGauge'),g=c.getContext('2d'),
  const a=rad(F.needle);g.lineCap='round';g.lineWidth=6;g.strokeStyle='#3b2a20';g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.cos(a)*(R+8),cy+Math.sin(a)*(R+8));g.stroke();
  g.fillStyle='#3b2a20';g.beginPath();g.arc(cx,cy,10,0,7);g.fill()}
 // rod + bobber in world
+function bobAt(){const p=Game.state.player,px=Math.floor(p.x),py=Math.floor(p.y);if(dock.some(d=>d[0]===px&&d[1]===py)){const[dx,dy]=dock[dock.length-1];return[(dx+.5)*T,(dy+.5+dockDir*1.3)*T]}
+ const D=[[0,1],[0,-1],[-1,0],[1,0]],f=D[p.dir],L=[f,...D];for(const[a,b]of L)if(ter(px+a,py+b)===WATER&&!isDock(px+a,py+b))return[(px+.5+a*1.3)*T,(py+.5+b*1.3)*T];return[(px+.5)*T,(py+1.8)*T]}
 window.fishDraw=()=>{if(F.st==='idle'||F.st==='fight'&&false)return;const p=Game.state.player,[cx,cy]=camXY();ctx.setTransform(dpr,0,0,dpr,-Math.round(cx*dpr),-Math.round(cy*dpr));
- const[dx,dy]=dock[dock.length-1],bx=(dx+.5)*T,by=(dy+.5+dockDir*1.3)*T,t=performance.now()/1000;let k=1;if(F.st==='cast')k=1-F.t/.7;
+ const[bx,by]=bobAt(),t=performance.now()/1000;let k=1;if(F.st==='cast')k=1-F.t/.7;
  const rx=p.x*T+T*.35,ry=(p.y-.9)*T;const tipX=rx+T*.2,tipY=ry-T*.6;
  ctx.strokeStyle='#7a4b1d';ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(rx,ry+T*.3);ctx.lineTo(tipX,tipY);ctx.stroke();
  const bob=F.st==='fight'?Math.sin(t*20)*5+6:Math.sin(t*3)*2,ex=tipX+(bx-tipX)*k,ey=tipY+(by-tipY)*k-Math.sin(k*Math.PI)*T+bob*(k>=1);
@@ -103,14 +105,14 @@ function icon(f,px,sil){const c=document.createElement('canvas');c.width=c.heigh
 // ---- 鱼篓 / 图鉴 ----
 let tab='bag';
 function renderBag(){const s=fs(),tot=Object.values(s.fishN).reduce((a,b)=>a+b,0),got=Object.keys(s.fishDex).filter(k=>FM[k]).length;
- bag.innerHTML=`<div class="card"><div class="tabs"><button data-tab="bag" class="${tab==='bag'?'on':''}">🧺 鱼篓（${tot}）</button><button data-tab="dex" class="${tab==='dex'?'on':''}">📖 图鉴 ${got}/${FISH.length}</button></div><div class="fgrid"></div><button id="bagClose">好的</button></div>`;
+ bag.innerHTML=`<div class="card"><b class="dockT">⚓ 码头</b><div class="tabs"><button data-tab="bag" class="${tab==='bag'?'on':''}">🧺 鱼篓（${tot}）</button><button data-tab="dex" class="${tab==='dex'?'on':''}">📖 图鉴 ${got}/${FISH.length}</button></div><div class="fgrid"></div>${onDock()&&F.st==='idle'?'<button id="bagFish">🎣 在这里钓鱼（'+COST+'个食物）</button>':'<p class="fHint">站到码头上就能钓鱼</p>'}<button id="bagClose">好的</button></div>`;
  const grid=bag.querySelector('.fgrid');
  if(tab==='bag'){const own=FISH.filter(f=>s.fishN[f.id]>0);if(!own.length)grid.innerHTML='<p class="empty">鱼篓还是空的，去码头钓鱼吧 🎣</p>';
   for(const f of own){const d=document.createElement('div');d.className='fc';d.appendChild(icon(f,48));d.insertAdjacentHTML('beforeend',`<b>${f.n}</b><span style="color:${TIERS[f.t].c}">${TIERS[f.t].k}</span><em>×${s.fishN[f.id]}</em>`);grid.appendChild(d)}}
  else for(const f of FISH){const e=s.fishDex[f.id],d=document.createElement('div');d.className='fc'+(e?'':' no');d.appendChild(icon(f,48,!e));
   const dt=e?new Date(e.at):null;d.insertAdjacentHTML('beforeend',e?`<b>${f.n}</b><span style="color:${TIERS[f.t].c}">${TIERS[f.t].k}</span><small>${e.by} 首钓 · ${dt.getMonth()+1}/${dt.getDate()}</small>`:`<b>？？？</b><span style="color:${TIERS[f.t].c}">${TIERS[f.t].k}</span><small>还没钓到</small>`);grid.appendChild(d)}}
-bagBtn.onclick=()=>{renderBag();bag.classList.remove('hidden')};
-bag.addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;renderBag()}if(e.target.id==='bagClose'||e.target===bag)bag.classList.add('hidden')});
-window.Fish={F,cast,reel,inZone,TIERS,FISH,dock:()=>dock,onDock,render:renderBag,COST,
+let openedAt=0;function openPanel(){renderBag();bag.classList.remove('hidden');openedAt=performance.now()}
+bag.addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;renderBag()}if(e.target.id==='bagFish'){bag.classList.add('hidden');cast();return}if(e.target.id==='bagClose'||e.target===bag&&performance.now()-openedAt>400)bag.classList.add('hidden')});
+window.Fish={F,cast,reel,inZone,TIERS,FISH,dock:()=>dock,onDock,render:renderBag,openPanel,COST,
  setNeedleInZone(){F.needle=F.zc},setNeedleOut(){F.needle=F.zc>0?-85:85},skipWait(){if(F.st==='cast'||F.st==='wait'){F.st='wait';F.wait=0}}};
 })();

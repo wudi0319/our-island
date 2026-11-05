@@ -2,7 +2,7 @@
 const W=64,H=64,T=48; // map size, tile px (CSS)
 const WATER=0,SAND=1,GRASS=2,SOIL=3;
 const CROPS={carrot:{name:'胡萝卜',ms:60e3},tomato:{name:'番茄',ms:120e3},strawberry:{name:'草莓',ms:180e3}}; // per stage, testing speeds
-const TOOLS=[['hoe','锄地'],['seed','播种'],['can','浇水'],['basket','收获'],['axe','砍树'],['fence','篱笆','fenceIcon'],['gate','栅栏门','gateIcon'],['flower','花'],['tree','树'],['house','小屋'],['canteen','食堂','canteenIcon'],['erase','拆除']];
+const TOOLS=[['hoe','锄地'],['seed','播种'],['can','浇水'],['basket','收获'],['axe','砍树'],['fence','篱笆','fenceIcon'],['gate','栅栏门','gateIcon'],['flower','花'],['tree','树'],['house','小屋'],['canteen','食堂','canteenIcon'],['dock','码头','dockIcon'],['erase','拆除']];
 const SOLID={tree:1,house:1,canteen:1,fence:1,rock:1};const BIG={house:1,canteen:1};const CANTEEN='胖仔食堂';
 
 // ---- world generation (seeded) ----
@@ -92,6 +92,11 @@ function toast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeo
 function act(){const[x,y]=front();actAt(x,y)}
 function bigErr(x,y,k){if(k==='canteen'&&Object.values(state.obj).includes('canteen'))return'已经有胖仔食堂啦';if(!inb(x,y)||x<1||x>W-3||y<3)return'这里放不下';const i=idx(x,y),fp=foot(i);if(fp.length<16||fp.some(j=>state.ter[j]===WATER||state.obj[j]||state.crops[j]||state.ter[j]===SOIL||occ[j]!=null))return'需要4×4的空地哦';
  const p=state.player;state.obj[i]=k;rebuildOcc();const ok=canStand(p.x,p.y);delete state.obj[i];rebuildOcc();return ok?null:'离太近啦，退后一点'}
+const DOCK_WOOD=2;
+function dockErr(x,y){if(!inb(x,y)||x<1||y<1||x>W-2||y>H-2)return'这里放不下';const i=idx(x,y);if(state.ter[i]!==WATER)return'码头要造在水上哦';if(state.obj[i]||window.isDock&&isDock(x,y))return'这里已经有码头啦';
+ if(![[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>inb(x+a,y+b)&&(state.ter[idx(x+a,y+b)]!==WATER||window.isDock&&isDock(x+a,y+b))))return'码头要挨着岸边或别的码头';
+ if((state.inv.wood||0)<DOCK_WOOD)return'造码头需要'+DOCK_WOOD+'块木头，去砍树吧🪓';return null}
+const pErr=q=>q.k==='dock'?dockErr(q.x,q.y):bigErr(q.x,q.y,q.k);
 function actAt(x,y){if(!inb(x,y))return;const i=idx(x,y);
  if(occ[i]!=null){const a=occ[i],kind=state.obj[a];if(tool==='erase'){delete state.obj[a];delete state.names[a];rebuildOcc();save();return toast(kind==='canteen'?'胖仔食堂拆掉了，美食记录还在哦':'小屋拆掉了')}
   return i===a?openBuilding(a):kind==='house'?openSign(a):openBuilding(a)}
@@ -103,7 +108,8 @@ function actAt(x,y){if(!inb(x,y))return;const i=idx(x,y);
  case'can':if(!c)return toast('前面没有作物');if(c.stage===2)return toast('成熟啦，快收获');if(c.wateredAt)return toast('已经浇过啦');c.wateredAt=Date.now();toast('浇水啦 💧');break;
  case'basket':if(!c||c.stage<2)return toast('还没成熟呢');state.inv[c.type]++;toast('收获 '+CROPS[c.type].name+' +1');delete state.crops[i];break;
  case'axe':if(o!=='tree')return toast('前面没有树');delete state.obj[i];state.inv.wood=(state.inv.wood||0)+3;toast('木头 +3');break;
- case'erase':if(o){delete state.obj[i];if(state.fhp)delete state.fhp[i]}else if(c)delete state.crops[i];else if(t===SOIL)state.ter[i]=GRASS;else return;break;
+ case'dock':{const er=dockErr(x,y);if(er)return toast(er);state.obj[i]='dock';state.inv.wood-=DOCK_WOOD;toast('码头造好啦（木头 -'+DOCK_WOOD+'）');break}
+ case'erase':if(o==='dock'){const pt=idx(Math.floor(p.x),Math.floor(p.y));delete state.obj[i];if(pt===i||!canStand(p.x,p.y)){state.obj[i]='dock';return toast('先离开这块码头再拆哦')}toast('码头拆掉了');break}if(o){delete state.obj[i];if(state.fhp)delete state.fhp[i]}else if(c)delete state.crops[i];else if(t===SOIL)state.ter[i]=GRASS;else return;break;
  case'house':case'canteen':{const er=bigErr(x,y,tool);if(er)return toast(er);state.obj[i]=tool;if(tool==='house')state.names[i]='我们的家';else toast('胖仔食堂开张啦！');rebuildOcc();break}
  default:if((tool==='fence'||tool==='gate')&&(o==='fence'||o==='gate'))return window.fenceRepair&&fenceRepair(i);if(i===pi)return;if(t===WATER)return toast('不能放在水里');if(o||c||t===SOIL)return toast('这里放不下');state.obj[i]=tool;if(SOLID[tool]&&!canStand(p.x,p.y)){delete state.obj[i];return toast('离太近啦，退后一点')}if(window.fenceNew&&(tool==='fence'||tool==='gate'))fenceNew(i)}
  rebuildOcc();save();renderInv()}
@@ -140,12 +146,14 @@ function draw(){frame++;const p=state.player;
    if((o==='fence'||o==='gate')&&window.fenceFx)fenceFx(x,y,i);
    else if(BIG[o]){ctx.save();ctx.translate((x-1.6)*T,(y-2.99)*T);ctx.scale(T*4.2,T*4.2);S[o](ctx);ctx.restore();drawSign(x,y,o==='canteen'?CANTEEN:state.names[i]||'我们的家')}
    else if(o==='tree'){ctx.save();ctx.translate((x-.15)*T,(y-.6)*T);ctx.scale(T*1.3,T*1.6);S.tree(ctx);ctx.restore()}
-   else if(o)sprite(S[o],x,y)}
+   else if(o&&o!=='dock')sprite(S[o],x,y)}
   if(window.babyDraw&&!baby.carried&&y===Math.floor(baby.y))babyDraw();
   window.drawOthers&&drawOthers(y);window.animalsDraw&&animalsDraw(y);window.intrDraw&&intrDraw(y);
   if(y===py){ctx.save();ctx.translate((p.x-.7)*T,(p.y-1.2)*T);ctx.scale(T*1.4,T*1.4);S.puppy(ctx,p.dir,phase,moving,charKind);ctx.restore();if(typeof baby!=='undefined'&&baby.carried)babyDraw()}}
  
- if(prev){const ok=!bigErr(prev.x,prev.y,prev.k);ctx.fillStyle=ok?'rgba(80,220,110,.35)':'rgba(255,70,70,.38)';ctx.strokeStyle=ok?'#2fa84f':'#e03b3b';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect((prev.x-1)*T,(prev.y-3)*T,4*T,4*T,12);ctx.fill();ctx.stroke();
+ if(prev&&prev.k==='dock'){const er=dockErr(prev.x,prev.y),ok=!er,X=prev.x*T,Y=prev.y*T;ctx.save();ctx.globalAlpha=.55;window.dockTile&&dockTile(prev.x,prev.y);ctx.restore();ctx.fillStyle=ok?'rgba(80,220,110,.35)':'rgba(255,70,70,.38)';ctx.strokeStyle=ok?'#2fa84f':'#e03b3b';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(X,Y,T,T,8);ctx.fill();ctx.stroke();
+  ctx.font='900 13px sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.lineWidth=4;ctx.strokeStyle='#fff';const m=ok?'✓ 可以造':'✗ '+er;ctx.strokeText(m,X+T/2,Y-4);ctx.fillStyle=ok?'#1f7a3a':'#c02020';ctx.fillText(m,X+T/2,Y-4)}
+ else if(prev){const ok=!bigErr(prev.x,prev.y,prev.k);ctx.fillStyle=ok?'rgba(80,220,110,.35)':'rgba(255,70,70,.38)';ctx.strokeStyle=ok?'#2fa84f':'#e03b3b';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect((prev.x-1)*T,(prev.y-3)*T,4*T,4*T,12);ctx.fill();ctx.stroke();
   ctx.save();ctx.globalAlpha=.6;ctx.translate((prev.x-1.6)*T,(prev.y-2.99)*T);ctx.scale(T*4.2,T*4.2);S[prev.k](ctx);ctx.restore()}
  }
 let last=performance.now();
@@ -166,9 +174,9 @@ function camXY(){const p=state.player;let cx=p.x*T-vw/2,cy=p.y*T-vh/2;return[Mat
 function toWorld(e){const r=cv.getBoundingClientRect(),[cx,cy]=camXY();return[(e.clientX-r.left+cx)/T,(e.clientY-r.top+cy)/T]}
 // ---- tap-to-use + building preview ----
 let prev=null,tap=null;const pvBar=document.getElementById('pv');
-function showPrev(x,y){prev={x:Math.max(1,Math.min(W-3,x)),y:Math.max(3,Math.min(H-1,y)),k:tool};pvBar.classList.remove('hidden')}
+function showPrev(x,y){prev=tool==='dock'?{x,y,k:tool}:{x:Math.max(1,Math.min(W-3,x)),y:Math.max(3,Math.min(H-1,y)),k:tool};pvBar.classList.remove('hidden')}
 function cancelPrev(){prev=null;pvBar.classList.add('hidden')}
-document.getElementById('pvOk').addEventListener('click',()=>{if(!prev)return;const er=bigErr(prev.x,prev.y,prev.k);if(er)return toast(er);const{x,y,k}=prev,t0=tool;tool=k;cancelPrev();actAt(x,y);tool=t0});
+document.getElementById('pvOk').addEventListener('click',()=>{if(!prev)return;const er=pErr(prev);if(er)return toast(er);const{x,y,k}=prev,t0=tool;tool=k;cancelPrev();actAt(x,y);tool=t0});
 document.getElementById('pvNo').addEventListener('click',cancelPrev);
 function tapBuilding(wx,wy){const p=state.player;for(const k in state.obj)if(BIG[state.obj[k]]){const x=k%W,y=k/W|0,cant=state.obj[k]==='canteen';
   const q=plaque(x,y,cant?CANTEEN:state.names[k]||'我们的家');if(wx>=q.x-.1&&wx<=q.x+q.w+.1&&wy>=q.y-.15&&wy<=q.y+q.h+.15){cant?openBuilding(+k):openSign(+k);return true}
@@ -179,6 +187,8 @@ cv.addEventListener('pointermove',e=>{if(!tap||e.pointerId!==tap.id)return;if(Ma
  if(prev&&tap.moved){prev.x=Math.max(1,Math.min(W-3,tap.px+Math.round((e.clientX-tap.sx)/T)));prev.y=Math.max(3,Math.min(H-1,tap.py+Math.round((e.clientY-tap.sy)/T)))}});
 const tapEnd=e=>{if(!tap||e.pointerId!==tap.id)return;const t=tap;tap=null;if(e.type==='pointercancel'||t.moved||performance.now()-t.t>600)return;
  const tx=Math.floor(t.wx),ty=Math.floor(t.wy);
+ if(tool==='dock'){if(prev&&prev.x===tx&&prev.y===ty)return document.getElementById('pvOk').click();showPrev(tx,ty);return}
+ if(tool!=='erase'&&window.isDock&&isDock(tx,ty)&&window.Fish){Fish.openPanel();return}
  if(BIG[tool]&&(prev||!tapBuilding(t.wx,t.wy)&&occ[idx(tx,ty)]==null)){showPrev(tx,ty+2);return}
  if(tapBuilding(t.wx,t.wy))return;actAt(tx,ty)};
 cv.addEventListener('pointerup',tapEnd);cv.addEventListener('pointercancel',tapEnd);

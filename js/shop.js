@@ -10,7 +10,7 @@ const SKINS=[
 const SK=Object.fromEntries(SKINS.map(s=>[s.id,s]));
 // v36: full animated sprite sets per skin (img/baby/<id>-<frame>.png), generated from the approved sheets.
 const FR=['m0','m1','m2','m3','idle0','idle1','laugh0','laugh1','sleep0','sleep1','cry0','cry1','eat'],IMG={};
-for(const k of SKINS){IMG[k.id]={};for(const f of FR){const i=new Image();i.src=`img/baby/${k.id}-${f}.png?v=38`;IMG[k.id][f]=i}}
+for(const k of SKINS){IMG[k.id]={};for(const f of FR){const i=new Image();i.src=`img/baby/${k.id}-${f}.png?v=39`;IMG[k.id][f]=i}}
 const ok=i=>i&&i.complete&&i.naturalWidth>0;
 function blit(c,im,u,ax,ay,px,py){c.drawImage(im,-px*im.naturalWidth*u+ax,-py*im.naturalHeight*u+ay,im.naturalWidth*u,im.naturalHeight*u)}
 // unit-box draw, feet at ~.96. Flags: S.fussy (held), S.closedEyes (sleep), S.happy (laugh), S.eating, S.cry
@@ -36,7 +36,7 @@ function buy(id){const s=st();if(s.own[id])return equip(id);const have=foodTotal
 function equip(id){const s=st();if(id!=='dog'&&!s.own[id])return;s.cur=id;s.at=Date.now();Game.save();render();Game.toast(id==='dog'?'胖宝换回小狗装啦🐶':'胖宝换上了'+SK[id].name+'✨')}
 // ---- UI (inside house rooms) ----
 const el=document.createElement('div');el.id='shop';document.querySelector('#house .emptyRoom').replaceWith(el);el.className='emptyRoom shop';
-function thumb(id){const c=document.createElement('canvas');c.width=c.height=96;const g=c.getContext('2d');g.scale(96,96);if(id==='dog')S.puppy(g,0,0,false,'baby');else{const i=document.createElement('img');i.src=`img/baby/${id}-laugh0.png?v=38`;i.className='thumb';return i}return c}
+function thumb(id){const c=document.createElement('canvas');c.width=c.height=96;const g=c.getContext('2d');g.scale(96,96);if(id==='dog')S.puppy(g,0,0,false,'baby');else{const i=document.createElement('img');i.src=`img/baby/${id}-laugh0.png?v=39`;i.className='thumb';return i}return c}
 function render(){const s=st(),cur=babySkin(),have=foodTotal();
  el.innerHTML=`<h3>🔮 神秘商店</h3><p class="sub">用 ${PRICE} 个任意食物兑换胖宝皮肤（现有 ${have} 个）· 两个人看到的胖宝一样哦</p><div class="skins"></div>`;
  const box=el.querySelector('.skins');
