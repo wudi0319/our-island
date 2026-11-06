@@ -17,15 +17,23 @@ const breedN=a=>fedTotal(a)-(a.fb||0);
 function aFree(x,y,drv){const tx=Math.floor(x),ty=Math.floor(y);if(!inb(tx,ty))return false;const i=idx(tx,ty),o=state.obj[i];return state.ter[i]!==WATER&&(!o||drv&&o==='gate'&&(gateAng[i]||0)>.6)&&occ[i]==null}
 const onGate=(x,y)=>state.obj[idx(Math.floor(x),Math.floor(y))]==='gate';
 function gateDriven(i){const x=i%W+.5,y=(i/W|0)+.5;for(const id in live){const l=live[id];if(l.run>0&&!l.fade&&Math.hypot(l.x-x,l.y-y)<1.6)return true}return false}
-const aFreeR=(x,y,r,d)=>aFree(x-r,y,d)&&aFree(x+r,y,d)&&aFree(x,y-r*.6,d)&&aFree(x,y+r*.4,d);
+// soft animal-animal spacing: ~0.8 tiles. selfId skips self; allow=true skips the check (drive through gates etc.)
+function aNear(x,y,self){for(const id in live){if(id===self||live[id].fade)continue;if(Math.hypot(live[id].x-x,live[id].y-y)<.8)return id}return null}
+const aFreeR=(x,y,r,d,self)=>aFree(x-r,y,d)&&aFree(x+r,y,d)&&aFree(x,y-r*.6,d)&&aFree(x,y+r*.4,d)&&!(self&&aNear(x,y,self));
+const N8=[[1,0],[-1,0],[0,1],[0,-1],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]];
+function pickStep(l,id,r,dv,wantX,wantY,sp){ // prefer toward want, else any free neighbor
+ const cand=[];for(const[a,b]of N8){const nx=l.x+a*.55,ny=l.y+b*.55;if(!aFreeR(nx,ny,r,dv,id))continue;
+  const score=wantX==null?Math.random():-(Math.hypot(wantX-nx,wantY-ny))+Math.random()*.15;cand.push({nx,ny,score,a,b})}
+ cand.sort((u,v)=>v.score-u.score);return cand[0]||null}
+
 function sync(){state.animals=state.animals||{};const A=state.animals;
  for(const id in live)if(!A[id]||A[id].gone&&!live[id].fade)delete live[id];
- for(const id in A){const a=A[id],l=live[id];if(a.gone)continue;if(!a.lf||!lastFed(a)){a.lf={[role()]:Date.now()};initLf=true}if(!l){live[id]={x:a.x,y:a.y,ax:a.x,ay:a.y,dir:3,ph:0,mv:false,t:Math.random()*3,tx:null,ty:null,run:0};continue}
+ for(const id in A){const a=A[id],l=live[id];if(a.gone)continue;if(!a.lf||!lastFed(a)){a.lf={[role()]:Date.now()};initLf=true}if(!l){live[id]={x:a.x,y:a.y,ax:a.x,ay:a.y,dir:3,ph:0,mv:false,t:Math.random()*3,tx:null,ty:null,run:0,stuck:0,lx:a.x,ly:a.y};continue}
   if(a.x!==l.ax||a.y!==l.ay){l.ax=a.x;l.ay=a.y;if(Math.hypot(a.x-l.x,a.y-l.y)>.3){if(Math.hypot(a.x-l.x,a.y-l.y)>8){l.x=a.x;l.y=a.y}else{l.tx=a.x;l.ty=a.y;l.t=6}}}}}
 function commit(id){const a=state.animals[id],l=live[id];if(!a||!l)return;a.x=l.ax=+l.x.toFixed(2);a.y=l.ay=+l.y.toFixed(2)}
 let uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function spawnAnimal(k,x,y,extra){if(x==null){for(let n=0;n<200;n++){const tx=2+Math.random()*(W-4)|0,ty=2+Math.random()*(H-4)|0;
-  if(state.ter[idx(tx,ty)]===GRASS&&aFreeR(tx+.5,ty+.5,.3)&&Math.hypot(tx-state.player.x,ty-state.player.y)>3){x=tx+.5;y=ty+.5;break}}if(x==null)return null}
+  if(state.ter[idx(tx,ty)]===GRASS&&aFreeR(tx+.5,ty+.5,.3,false,null)&&!aNear(tx+.5,ty+.5,null)&&Math.hypot(tx-state.player.x,ty-state.player.y)>3){x=tx+.5;y=ty+.5;break}}if(x==null)return null}
  state.animals=state.animals||{};const id=(extra&&extra.id)||k[0]+uid();state.animals[id]=Object.assign({k,x:+x.toFixed(2),y:+y.toFixed(2),fed:{},lf:{[role()]:Date.now()}},extra||{});delete state.animals[id].id;sync();return id}
 function nearest(kinds){const p=state.player;let best=null,bd=1e9;for(const id in live){const a=state.animals[id];if(!a||!kinds.includes(a.k))continue;const l=live[id];if(l.fade||window.intrCarrier&&intrCarrier(id))continue;const d=Math.hypot(l.x-p.x,l.y-p.y)-(l.run>0?1.4:0);if(d<1.6&&d<bd){bd=d;best=id}}return best}
 function animalsUpdate(dt){sync();const A=state.animals;
@@ -33,14 +41,24 @@ function animalsUpdate(dt){sync();const A=state.animals;
  for(const id in live){const l=live[id],a=A[id];if(l.fade){l.fade-=dt;if(l.fade<=0)delete live[id];continue}const cw=window.intrCarrier&&intrCarrier(id);if(cw){l.x=cw.x+.2;l.y=cw.y-.05;l.tx=null;l.mv=true;l.ph+=dt*20;continue}const rs=!isHost()&&window.SimIn&&SimIn.a[id];if(rs&&l.run<=0&&performance.now()-rs.t<4000){const v=rs.v,k=1-Math.exp(-dt*6);if(Math.hypot(v[0]-l.x,v[1]-l.y)>5){l.x=v[0];l.y=v[1]}else{l.x+=(v[0]-l.x)*k;l.y+=(v[1]-l.y)*k}l.dir=v[2];l.mv=!!v[3]||Math.hypot(v[0]-l.x,v[1]-l.y)>.05;if(l.mv)l.ph+=dt*10;l.tx=null;continue}
   const sp=ANI[a.k].sp*(l.run>0?4:1);l.t-=dt;
   if(l.run>0){l.run-=dt;if(l.run<=0&&onGate(l.x,l.y))l.run=.3;if(l.run<=0){l.tx=null;l.t=2+Math.random()*3;commit(id);save()}}
-  if(l.tx==null&&l.t<0){const mom=a.mom&&live[a.mom];const cx=mom?mom.x:l.x,cy=mom?mom.y:l.y,r=mom?1.5:3;
-   const tx=cx+(Math.random()*2-1)*r,ty=cy+(Math.random()*2-1)*r;if(Math.random()<.6&&aFreeR(tx,ty,.3)){l.tx=tx;l.ty=ty;l.t=8}else l.t=2+Math.random()*4}
+  const rad=KIDS.includes(a.k)?.2:.3,dv=l.run>0;
+  // gentle unstick nudge if overlapping another animal
+  const oth=aNear(l.x,l.y,id);if(oth){const o=live[oth],dd=Math.hypot(l.x-o.x,l.y-o.y)||.01,ux=(l.x-o.x)/dd,uy=(l.y-o.y)/dd,nx=l.x+ux*.08,ny=l.y+uy*.08;if(aFreeR(nx,l.y,rad,dv))l.x=nx;if(aFreeR(l.x,ny,rad,dv))l.y=ny}
+  if(l.tx==null&&l.t<0){const mom=a.mom&&live[a.mom];const cx=mom?mom.x:l.x,cy=mom?mom.y:l.y,rr=mom?1.5:3;
+   let placed=false;for(let tries=0;tries<6&&!placed;tries++){const tx=cx+(Math.random()*2-1)*rr,ty=cy+(Math.random()*2-1)*rr;if(aFreeR(tx,ty,rad,false,id)){l.tx=tx;l.ty=ty;l.t=8;placed=true}}
+   if(!placed)l.t=1.5+Math.random()*3}
   l.mv=false;if(l.tx!=null){const dx=l.tx-l.x,dy=l.ty-l.y,d=Math.hypot(dx,dy);
    if(d<.08&&l.nx!=null){l.tx=l.nx;l.ty=l.ny;l.nx=null}else if(d<.08||l.t<0){l.nx=null;l.tx=null;l.t=2+Math.random()*4;if(l.run>0){l.run=0;commit(id);save()}}
-   else{const s=Math.min(d,sp*dt),vx=dx/d*s,vy=dy/d*s,r=KIDS.includes(a.k)?.2:.3,dv=l.run>0;let m=false;
-    if(aFreeR(l.x+vx,l.y,r,dv)){l.x+=vx;m=true}if(aFreeR(l.x,l.y+vy,r,dv)){l.y+=vy;m=true}
+   else{const step=Math.min(d,sp*dt),vx=dx/d*step,vy=dy/d*step;let m=false,ox=l.x,oy=l.y;
+    if(aFreeR(l.x+vx,l.y,rad,dv,id)){l.x+=vx;m=true}if(aFreeR(l.x,l.y+vy,rad,dv,id)){l.y+=vy;m=true}
     if(!m&&dv&&onGate(l.x,l.y)){l.x+=vx;l.y+=vy;m=true}
-    if(!m){l.nx=null;l.tx=null;l.t=1+Math.random()*2;if(l.run>0){l.run=0;commit(id);save()}}else{l.mv=true;l.ph+=dt*10;if(Math.abs(vx)>.001)l.dir=vx<0?2:3}}}}
+    if(!m){ // blocked: slide along an adjacent free tile toward the goal, else give up this target
+     const alt=pickStep(l,id,rad,dv,l.tx,l.ty,sp);if(alt){const len=Math.hypot(alt.a,alt.b)||1,s2=sp*dt;l.x+=alt.a/len*s2;l.y+=alt.b/len*s2;if(!aFreeR(l.x,l.y,rad,dv,id)){l.x=ox;l.y=oy}else{m=true;if(Math.abs(alt.a)>.001)l.dir=alt.a<0?2:3}}
+     if(!m){l.nx=null;l.tx=null;l.t=.3+Math.random()*.7;if(l.run>0){l.run=0;commit(id);save()}}}
+    else{l.mv=true;l.ph+=dt*10;l.stuck=0;if(Math.abs(vx)>.001)l.dir=vx<0?2:3}}}
+  // periodic unstick: haven't meaningfully moved for ~2.5s, pick a random free neighbor as a short target
+  if(Math.hypot(l.x-(l.lx||l.x),l.y-(l.ly||l.y))>.12){l.lx=l.x;l.ly=l.y;l.stuck=0}else l.stuck=(l.stuck||0)+dt;
+  if((l.stuck||0)>2.5&&l.run<=0){const alt=pickStep(l,id,rad,false,null,null,sp);if(alt){l.tx=alt.nx;l.ty=alt.ny;l.t=3;l.stuck=0}else l.stuck=1.5}}
  if(isHost()){spawnT-=dt;posT-=dt;
   if(spawnT<0){spawnT=120+Math.random()*120;const c={pig:0,cow:0};for(const id in A)if(!A[id].gone&&c[A[id].k]!=null&&!A[id].mom)c[A[id].k]++;
    const k=Math.random()<.55?'pig':'cow',k2=k==='pig'?'cow':'pig',pick=c[k]<ANI[k].cap?k:c[k2]<ANI[k2].cap?k2:null;if(pick&&spawnAnimal(pick)){toast('岛上来了一只'+ANI[pick].name+'！');save()}}
@@ -66,7 +84,7 @@ function feed(){const id=nearest(ALLK),f=foodOf();if(!id||!f)return;const a=stat
  if(GROWN[a.k]){a.fed=a.fed||{};a.fed[r]=(a.fed[r]||0)+1;const n=fedTotal(a);
   if(n>=GROW_FEEDS){const was=a.k;a.k=GROWN[was];a.fb=n;a.grown=Date.now();delete a.mom;const l=live[id];if(l){l.tx=null;l.nx=null}toast(a.k==='cow'?'小牛长大了！🐮':'小猪长大了！🐷')}
   else toast(ANI[a.k].name+'吃了'+FNM[f]+' '+FIC[f]+'（'+n+'/'+GROW_FEEDS+'）')}
- else if(BABY[a.k]){a.fed=a.fed||{};a.fed[r]=(a.fed[r]||0)+1;const n=breedN(a);if(n%8===0){const l=live[id],cid=id+'-b'+n/8;if(!state.animals[cid]){let bx=l.x,by=l.y;for(const[ox,oy]of[[.8,0],[-.8,0],[0,.8],[0,-.8],[0,0]])if(aFreeR(l.x+ox,l.y+oy,.2)){bx=l.x+ox;by=l.y+oy;break}
+ else if(BABY[a.k]){a.fed=a.fed||{};a.fed[r]=(a.fed[r]||0)+1;const n=breedN(a);if(n%8===0){const l=live[id],cid=id+'-b'+n/8;if(!state.animals[cid]){let bx=l.x,by=l.y;for(const[ox,oy]of[[.8,0],[-.8,0],[0,.8],[0,-.8],[0,0]])if(aFreeR(l.x+ox,l.y+oy,.2,false,id)){bx=l.x+ox;by=l.y+oy;break}
    spawnAnimal(BABY[a.k],bx,by,{id:cid,mom:id})}toast(a.k==='cow'?'生了一只小牛犊！🐮':'生了一只迷你小猪！🐷')}else toast('喂了一根'+FNM[f]+' '+FIC[f])}
  else toast(ANI[a.k].name+'吃了'+FNM[f]+' '+FIC[f]);commit(id);save();renderInv()}
 driveBtn.addEventListener('pointerdown',e=>{e.preventDefault();drive()});feedBtn.addEventListener('pointerdown',e=>{e.preventDefault();feed()});
