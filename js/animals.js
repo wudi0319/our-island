@@ -43,17 +43,20 @@ function animalsUpdate(dt){sync();const A=state.animals;
   if(l.run>0){l.run-=dt;if(l.run<=0&&onGate(l.x,l.y))l.run=.3;if(l.run<=0){l.tx=null;l.t=2+Math.random()*3;commit(id);save()}}
   const rad=KIDS.includes(a.k)?.2:.3,dv=l.run>0;
   // gentle unstick nudge if overlapping another animal
-  const oth=aNear(l.x,l.y,id);if(oth){const o=live[oth],dd=Math.hypot(l.x-o.x,l.y-o.y)||.01,ux=(l.x-o.x)/dd,uy=(l.y-o.y)/dd,nx=l.x+ux*.08,ny=l.y+uy*.08;if(aFreeR(nx,l.y,rad,dv))l.x=nx;if(aFreeR(l.x,ny,rad,dv))l.y=ny}
+  const oth=!dv&&aNear(l.x,l.y,id);if(oth){const o=live[oth],dd=Math.hypot(l.x-o.x,l.y-o.y)||.01,ux=(l.x-o.x)/dd,uy=(l.y-o.y)/dd,nx=l.x+ux*.08,ny=l.y+uy*.08;if(aFreeR(nx,l.y,rad,dv))l.x=nx;if(aFreeR(l.x,ny,rad,dv))l.y=ny}
   if(l.tx==null&&l.t<0){const mom=a.mom&&live[a.mom];const cx=mom?mom.x:l.x,cy=mom?mom.y:l.y,rr=mom?1.5:3;
    let placed=false;for(let tries=0;tries<6&&!placed;tries++){const tx=cx+(Math.random()*2-1)*rr,ty=cy+(Math.random()*2-1)*rr;if(aFreeR(tx,ty,rad,false,id)){l.tx=tx;l.ty=ty;l.t=8;placed=true}}
    if(!placed)l.t=1.5+Math.random()*3}
   l.mv=false;if(l.tx!=null){const dx=l.tx-l.x,dy=l.ty-l.y,d=Math.hypot(dx,dy);
    if(d<.08&&l.nx!=null){l.tx=l.nx;l.ty=l.ny;l.nx=null}else if(d<.08||l.t<0){l.nx=null;l.tx=null;l.t=2+Math.random()*4;if(l.run>0){l.run=0;commit(id);save()}}
    else{const step=Math.min(d,sp*dt),vx=dx/d*step,vy=dy/d*step;let m=false,ox=l.x,oy=l.y;
-    if(aFreeR(l.x+vx,l.y,rad,dv,id)){l.x+=vx;m=true}if(aFreeR(l.x,l.y+vy,rad,dv,id)){l.y+=vy;m=true}
+    const me=dv?null:id;if(aFreeR(l.x+vx,l.y,rad,dv,me)){l.x+=vx;m=true}if(aFreeR(l.x,l.y+vy,rad,dv,me)){l.y+=vy;m=true}
     if(!m&&dv&&onGate(l.x,l.y)){l.x+=vx;l.y+=vy;m=true}
+    if(m&&dv&&Math.hypot(l.x-ox,l.y-oy)<step*.35){l.x=ox;l.y=oy;m=false} // driven but grinding into a wall -> treat as blocked so it slides away
     if(!m){ // blocked: slide along an adjacent free tile toward the goal, else give up this target
-     const alt=pickStep(l,id,rad,dv,l.tx,l.ty,sp);if(alt){const len=Math.hypot(alt.a,alt.b)||1,s2=sp*dt;l.x+=alt.a/len*s2;l.y+=alt.b/len*s2;if(!aFreeR(l.x,l.y,rad,dv,id)){l.x=ox;l.y=oy}else{m=true;if(Math.abs(alt.a)>.001)l.dir=alt.a<0?2:3}}
+     if(dv){const px=l.px!=null?l.px:l.x,py=l.py!=null?l.py:l.y;let best=null;for(const[a,b]of N8){const nx=l.x+a*.55,ny=l.y+b*.55;if(!aFreeR(nx,ny,rad,true,null))continue;const sc=Math.hypot(nx-px,ny-py)+Math.random()*.05;if(!best||sc>best.sc)best={a,b,sc}}
+      if(best){const len=Math.hypot(best.a,best.b);l.tx=l.x+best.a/len*2.5;l.ty=l.y+best.b/len*2.5;l.nx=null;m=true;l.mv=true}}
+     const alt=m?null:pickStep(l,id,rad,dv,l.tx,l.ty,sp);if(alt){const len=Math.hypot(alt.a,alt.b)||1,s2=sp*dt;l.x+=alt.a/len*s2;l.y+=alt.b/len*s2;if(!aFreeR(l.x,l.y,rad,dv,id)){l.x=ox;l.y=oy}else{m=true;if(Math.abs(alt.a)>.001)l.dir=alt.a<0?2:3}}
      if(!m){l.nx=null;l.tx=null;l.t=.3+Math.random()*.7;if(l.run>0){l.run=0;commit(id);save()}}}
     else{l.mv=true;l.ph+=dt*10;l.stuck=0;if(Math.abs(vx)>.001)l.dir=vx<0?2:3}}}
   // periodic unstick: haven't meaningfully moved for ~2.5s, pick a random free neighbor as a short target
@@ -73,13 +76,13 @@ const FOODS=['carrot','tomato','strawberry'],FIC={carrot:'🥕',tomato:'🍅',st
 const ALLK=['pig','cow','piglet','calf'];const foodOf=()=>FOODS.find(k=>state.inv[k]>0);
 function buttons(){const id=nearest(ALLK),a=id&&state.animals[id],f=foodOf(),cw=a&&(a.k==='cow'||a.k==='calf');
  show(driveBtn,!!a,a?(cw?'赶牛':'赶猪'):null);show(feedBtn,!!a&&!!f,a&&f?(cw?'喂牛 ':'喂猪 ')+FIC[f]:null)}
-function applyDrive(p){const l=live[p.id];if(!l)return;Object.assign(l,{tx:p.tx,ty:p.ty,nx:p.nx,ny:p.ny,run:p.run,t:6,dir:p.dir})}
+function applyDrive(p){const l=live[p.id];if(!l)return;Object.assign(l,{tx:p.tx,ty:p.ty,nx:p.nx,ny:p.ny,run:p.run,t:6,dir:p.dir,px:p.px,py:p.py})}
 function drive(){const id=nearest(ALLK);if(!id)return;const l=live[id],p=state.player,k=state.animals[id].k;let dx=l.x-p.x,dy=l.y-p.y,d=Math.hypot(dx,dy)||1;dx/=d;dy/=d;
  l.nx=null;l.tx=l.x+dx*5;l.ty=l.y+dy*5;
  // smart: steer through a gate roughly ahead (<=45°, <=5 tiles)
  let bg=null,bs=1e9;for(const i of gates){const gx=i%W+.5,gy=(i/W|0)+.5,vx=gx-l.x,vy=gy-l.y,gd=Math.hypot(vx,vy);if(gd>5||gd<.2)continue;if((vx*dx+vy*dy)/gd<.7)continue;const sc=gd*(2-(vx*dx+vy*dy)/gd);if(sc<bs){bs=sc;bg=[gx,gy,vx/gd,vy/gd]}}
  if(bg){l.tx=bg[0];l.ty=bg[1];l.nx=bg[0]+bg[2]*1.3;l.ny=bg[1]+bg[3]*1.3}
- l.run=Math.min(5,Math.max(l.run,0)+2.5);l.t=6;l.dir=dx<0?2:3;if(!isHost()&&window.SyncDrive)SyncDrive({id,tx:l.tx,ty:l.ty,nx:l.nx,ny:l.ny,run:l.run,dir:l.dir});if(!l.tt||performance.now()-l.tt>1500){l.tt=performance.now();toast(k==='cow'||k==='calf'?'小牛快跑～':'小猪快跑～')}}
+ l.px=p.x;l.py=p.y;l.run=Math.min(5,Math.max(l.run,0)+2.5);l.t=6;l.dir=dx<0?2:3;if(!isHost()&&window.SyncDrive)SyncDrive({id,tx:l.tx,ty:l.ty,nx:l.nx,ny:l.ny,run:l.run,dir:l.dir,px:p.x,py:p.y});if(!l.tt||performance.now()-l.tt>1500){l.tt=performance.now();toast(k==='cow'||k==='calf'?'小牛快跑～':'小猪快跑～')}}
 function feed(){const id=nearest(ALLK),f=foodOf();if(!id||!f)return;const a=state.animals[id],r=role();state.inv[f]--;a.lf=a.lf||{};a.lf[r]=Date.now();
  if(GROWN[a.k]){a.fed=a.fed||{};a.fed[r]=(a.fed[r]||0)+1;const n=fedTotal(a);
   if(n>=GROW_FEEDS){const was=a.k;a.k=GROWN[was];a.fb=n;a.grown=Date.now();delete a.mom;const l=live[id];if(l){l.tx=null;l.nx=null}toast(a.k==='cow'?'小牛长大了！🐮':'小猪长大了！🐷')}
