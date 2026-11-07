@@ -29,8 +29,9 @@ function pickStep(l,id,r,dv,wantX,wantY,sp){ // prefer toward want, else any fre
 function sync(){state.animals=state.animals||{};const A=state.animals;
  for(const id in live)if(!A[id]||A[id].gone&&!live[id].fade)delete live[id];
  for(const id in A){const a=A[id],l=live[id];if(a.gone)continue;if(!a.lf||!lastFed(a)){a.lf={[role()]:Date.now()};initLf=true}if(!l){live[id]={x:a.x,y:a.y,ax:a.x,ay:a.y,dir:3,ph:0,mv:false,t:Math.random()*3,tx:null,ty:null,run:0,stuck:0,lx:a.x,ly:a.y};continue}
-  if(a.x!==l.ax||a.y!==l.ay){l.ax=a.x;l.ay=a.y;if(Math.hypot(a.x-l.x,a.y-l.y)>.3){if(Math.hypot(a.x-l.x,a.y-l.y)>8){l.x=a.x;l.y=a.y}else{l.tx=a.x;l.ty=a.y;l.t=6}}}}}
-function commit(id){const a=state.animals[id],l=live[id];if(!a||!l)return;a.x=l.ax=+l.x.toFixed(2);a.y=l.ay=+l.y.toFixed(2)}
+  if(a.x!==l.ax||a.y!==l.ay){l.ax=a.x;l.ay=a.y;if(l.run>0&&isHost())continue;if(Math.hypot(a.x-l.x,a.y-l.y)>.3){if(Math.hypot(a.x-l.x,a.y-l.y)>8){l.x=a.x;l.y=a.y}else{l.tx=a.x;l.ty=a.y;l.t=6}}}}}
+function commit(id){const a=state.animals[id],l=live[id];if(!a||!l||!isHost())return; // only the host writes positions; a non-host's local drive preview would otherwise yank the host's animal back later
+a.x=l.ax=+l.x.toFixed(2);a.y=l.ay=+l.y.toFixed(2)}
 let uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function spawnAnimal(k,x,y,extra){if(x==null){for(let n=0;n<200;n++){const tx=2+Math.random()*(W-4)|0,ty=2+Math.random()*(H-4)|0;
   if(state.ter[idx(tx,ty)]===GRASS&&aFreeR(tx+.5,ty+.5,.3,false,null)&&!aNear(tx+.5,ty+.5,null)&&Math.hypot(tx-state.player.x,ty-state.player.y)>3){x=tx+.5;y=ty+.5;break}}if(x==null)return null}
