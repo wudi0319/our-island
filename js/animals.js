@@ -18,7 +18,8 @@ function aFree(x,y,drv){const tx=Math.floor(x),ty=Math.floor(y);if(!inb(tx,ty))r
 const onGate=(x,y)=>state.obj[idx(Math.floor(x),Math.floor(y))]==='gate';
 function gateDriven(i){const x=i%W+.5,y=(i/W|0)+.5;for(const id in live){const l=live[id];if(l.run>0&&!l.fade&&Math.hypot(l.x-x,l.y-y)<1.6)return true}return false}
 // soft animal-animal spacing: ~0.8 tiles. selfId skips self; allow=true skips the check (drive through gates etc.)
-function aNear(x,y,self){for(const id in live){if(id===self||live[id].fade)continue;if(Math.hypot(live[id].x-x,live[id].y-y)<.8)return id}return null}
+const SPACE={cow:1.4,pig:1.15,calf:.82,piglet:.65};function spaceOf(id){const a=id&&state.animals[id];return a&&SPACE[a.k]||.9}
+function aNear(x,y,self){const ms=spaceOf(self);for(const id in live){if(id===self||live[id].fade)continue;if(Math.hypot(live[id].x-x,live[id].y-y)<(ms+spaceOf(id))/2)return id}return null}
 const aFreeR=(x,y,r,d,self)=>aFree(x-r,y,d)&&aFree(x+r,y,d)&&aFree(x,y-r*.6,d)&&aFree(x,y+r*.4,d)&&!(self&&aNear(x,y,self));
 const N8=[[1,0],[-1,0],[0,1],[0,-1],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]];
 function pickStep(l,id,r,dv,wantX,wantY,sp){ // prefer toward want, else any free neighbor
@@ -44,7 +45,7 @@ function animalsUpdate(dt){sync();const A=state.animals;
   if(l.run>0){l.run-=dt;if(l.run<=0&&onGate(l.x,l.y))l.run=.3;if(l.run<=0){l.tx=null;l.t=2+Math.random()*3;commit(id);save()}}
   const rad=KIDS.includes(a.k)?.2:.3,dv=l.run>0;
   // gentle unstick nudge if overlapping another animal
-  const oth=!dv&&aNear(l.x,l.y,id);if(oth){const o=live[oth],dd=Math.hypot(l.x-o.x,l.y-o.y)||.01,ux=(l.x-o.x)/dd,uy=(l.y-o.y)/dd,nx=l.x+ux*.08,ny=l.y+uy*.08;if(aFreeR(nx,l.y,rad,dv))l.x=nx;if(aFreeR(l.x,ny,rad,dv))l.y=ny}
+  const oth=!dv&&aNear(l.x,l.y,id);if(oth){const o=live[oth],dd=Math.hypot(l.x-o.x,l.y-o.y)||.01,ux=(l.x-o.x)/dd,uy=(l.y-o.y)/dd,need=(spaceOf(id)+spaceOf(oth))/2,pu=dd<need*.6?.14:.08,nx=l.x+ux*pu,ny=l.y+uy*pu;if(aFreeR(nx,l.y,rad,dv))l.x=nx;if(aFreeR(l.x,ny,rad,dv))l.y=ny}
   if(l.tx==null&&l.t<0){const mom=a.mom&&live[a.mom];const cx=mom?mom.x:l.x,cy=mom?mom.y:l.y,rr=mom?1.5:3;
    let placed=false;for(let tries=0;tries<6&&!placed;tries++){const tx=cx+(Math.random()*2-1)*rr,ty=cy+(Math.random()*2-1)*rr;if(aFreeR(tx,ty,rad,false,id)){l.tx=tx;l.ty=ty;l.t=8;placed=true}}
    if(!placed)l.t=1.5+Math.random()*3}
