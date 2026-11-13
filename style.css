@@ -108,3 +108,43 @@ body.online #menu .card>b{display:none}#title{white-space:nowrap;font-size:15px}
 #bagClose{margin-top:10px;border:0;border-radius:12px;background:#f5a623;color:#fff;font-weight:900;padding:8px 22px}
 #bagFish{display:block;margin:10px auto 0;border:0;border-radius:14px;background:#3fa9f5;color:#fff;font-weight:900;padding:9px 18px;font-size:15px}#fishBag .dockT{display:block;font-size:17px;margin-bottom:8px}
 #toolbar{grid-template-columns:repeat(7,1fr);gap:3px}.tool{font-size:10px}.tool canvas{width:26px;height:26px}
+/* v47 小岛赌场 */
+#toolbar{grid-template-columns:repeat(8,1fr)}
+#casino{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}
+#casino>.card{background:#fff8e7;border:3px solid #6b4a32;border-radius:20px;padding:12px 14px 14px;width:340px;max-width:94vw;max-height:88vh;overflow:auto;text-align:center;color:#7a4b1d;-webkit-overflow-scrolling:touch}
+#casino .csnT{display:block;font-size:19px;color:#c8323c;letter-spacing:1px}
+#casino .csnSub{margin:2px 0 6px;font-size:12px;color:#b08050;font-weight:700}
+#casino .wheelBox{position:relative;width:236px;height:236px;margin:4px auto 6px}
+#cWheel{width:236px;height:236px;display:block}
+#casino .cPtr{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:28px solid #ff3a4a;filter:drop-shadow(0 2px 0 #3b2a20)}
+#casino .cRes{min-height:40px;margin:2px 0 6px;padding:7px 8px;border-radius:12px;background:#fff;border:2px dashed #f0d6ae;font-weight:900;font-size:14px;line-height:1.35}
+#casino .cRes.good{background:#fff3c4;border:2px solid #f0a020;color:#b05a00}
+#casino .cRes.bad{background:#ece8f2;border:2px solid #8a84a0;color:#4b4a5e}
+#casino .cRes.meh{background:#e9f1ff;border:2px solid #6f9be0;color:#3a5a9a}
+#casino .cLbl{font-size:12px;font-weight:900;color:#b08050;margin:8px 0 4px;text-align:left}
+#casino .cTabs{display:flex;gap:6px}
+#casino .cTabs button{flex:1;border:2px solid #f0d6ae;background:#fff;border-radius:12px;padding:7px;font-weight:900;color:#7a4b1d;font-size:14px}
+#casino .cTabs button.on{background:#ffd23f;border-color:#e0a020}
+#cBets{margin-top:6px}
+#casino .cAmt{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+#casino .cAmt button{border:2px solid #f0d6ae;background:#fff;border-radius:12px;padding:6px 0;font-weight:900;font-size:18px;color:#7a4b1d;display:flex;flex-direction:column;align-items:center}
+#casino .cAmt button small{font-size:10px;font-weight:700;color:#b08050}
+#casino .cAmt button.on{background:#ffe4cc;border-color:#ff8c42}
+#casino .cAmt button.poor{opacity:.45}
+#casino .cFish{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+#casino .cFish button{border:2px solid #f0d6ae;background:#fff;border-radius:12px;padding:5px 2px;display:flex;flex-direction:column;align-items:center;font-size:11px;color:#7a4b1d}
+#casino .cFish button b{font-size:13px}#casino .cFish button em{font-style:normal;font-weight:900}
+#casino .cFish button.on{background:#ffe4cc;border-color:#ff8c42}
+#casino .empty{font-size:13px;color:#b08050;margin:6px 0}
+#cSpin{display:block;width:100%;margin:12px 0 2px;border:3px solid #fff;background:linear-gradient(#ff6b5a,#e8303a);color:#fff;font-weight:900;font-size:20px;border-radius:22px;padding:11px 10px;box-shadow:0 5px 0 #a8202a}
+#cSpin:active{transform:translateY(3px);box-shadow:0 2px 0 #a8202a}#cSpin:disabled{opacity:.6}
+#cLog{list-style:none;margin:0;padding:0;text-align:left;font-size:12px;max-height:170px;overflow:auto}
+#cLog li{background:#fff;border:1px solid #f0d6ae;border-radius:10px;padding:5px 7px;margin-bottom:4px;line-height:1.35}
+#cLog li .t{color:#b08050;margin-right:4px}#cLog li.empty{text-align:center;color:#b08050}
+#casino .cOdds{font-size:10.5px;color:#b08050;margin:6px 0 0}
+#cClose{margin-top:10px;border:0;border-radius:12px;background:#f5a623;color:#fff;font-weight:900;padding:8px 26px;font-size:15px}
+#cWarn{position:fixed;inset:0;z-index:25;background:rgba(40,25,15,.45);display:flex;align-items:center;justify-content:center}
+#cWarn .card{background:#fff8e7;border:3px solid #6b4a32;border-radius:20px;padding:16px;width:280px;text-align:center;color:#7a4b1d}
+#cWarn .big{font-size:44px}#cWarn b{font-size:18px}#cWarn p{font-size:13px;margin:8px 0 12px}
+#cWarn .row{display:flex;gap:8px}#cWarn .row button{flex:1;border:0;border-radius:12px;padding:10px 2px;font-weight:900;font-size:13px;white-space:nowrap}
+#cWarnNo{background:#4cc36b;color:#fff}#cWarnOk{background:#f0d6ae;color:#7a4b1d}

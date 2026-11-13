@@ -144,6 +144,38 @@ S.canteen=c=>{const sh=(x,y,rx,ry)=>{c.beginPath();c.ellipse(x,y,rx,ry,0,0,7);c.
  circ(c,.5,.13,.025,'#f7b2c0',false)};
 S.canteenIcon=c=>{c.save();c.translate(.02,.12);c.scale(.96,.86);S.canteen(c);c.restore()};
 
+// v47 小岛赌场: red walls, gold roof, neon 777 sign, blinking marquee bulbs, red carpet
+S.casino=c=>{const t=performance.now()/1000,bl=Math.floor(t*3)%2,ln=w=>{c.lineWidth=w;c.lineJoin='round';c.strokeStyle=OL;c.stroke()};
+ c.beginPath();c.ellipse(.5,.95,.47,.08,0,0,7);c.fillStyle='rgba(90,60,30,.22)';c.fill();
+ // walls
+ c.beginPath();c.roundRect(.08,.36,.84,.58,.05);c.fillStyle='#c8323c';c.fill();ln(.035);
+ for(let k=0;k<6;k++){c.fillStyle='rgba(255,255,255,.08)';c.fillRect(.12+k*.14,.4,.07,.52)}
+ // gold roof
+ c.beginPath();c.moveTo(.02,.42);c.lineTo(.12,.16);c.lineTo(.88,.16);c.lineTo(.98,.42);c.closePath();c.fillStyle='#f5c542';c.fill();ln(.035);
+ c.beginPath();c.moveTo(.06,.36);c.lineTo(.94,.36);c.lineWidth=.02;c.strokeStyle='#d99a1c';c.stroke();
+ // marquee bulbs along roof edge
+ for(let k=0;k<11;k++){const x=.07+k*.086,on=(k+bl)%2;c.beginPath();c.arc(x,.42,.022,0,7);c.fillStyle=on?'#fff7a0':'#ff8a3a';c.fill();c.lineWidth=.012;c.strokeStyle=OL;c.stroke();
+  if(on){c.beginPath();c.arc(x,.42,.04,0,7);c.fillStyle='rgba(255,240,120,.35)';c.fill()}}
+ // neon sign board on the roof
+ c.beginPath();c.roundRect(.2,-.06,.6,.24,.05);c.fillStyle='#2b1846';c.fill();ln(.035);
+ c.beginPath();c.roundRect(.23,-.03,.54,.18,.035);c.lineWidth=.018;c.strokeStyle=bl?'#ff5ad0':'#ff9ae6';c.stroke();
+ for(let k=0;k<3;k++){const x=.27+k*.16;c.beginPath();c.roundRect(x,-.01,.13,.14,.02);c.fillStyle='#fff8e7';c.fill();c.lineWidth=.012;c.strokeStyle=OL;c.stroke();
+  c.beginPath();c.moveTo(x+.03,.02);c.lineTo(x+.1,.02);c.lineTo(x+.055,.115);c.lineWidth=.024;c.lineCap='round';c.strokeStyle='#e8202a';c.stroke()}
+ // windows with card suits
+ const win=(x,suit)=>{c.beginPath();c.roundRect(x,.56,.2,.2,.04);c.fillStyle='#ffe6a8';c.fill();ln(.03);const cx=x+.1,cy=.66;c.beginPath();
+  if(suit){c.moveTo(cx,cy-.06);c.lineTo(cx+.045,cy);c.lineTo(cx,cy+.06);c.lineTo(cx-.045,cy);c.closePath();c.fillStyle='#e8202a'}
+  else{c.moveTo(cx,cy+.055);c.bezierCurveTo(cx-.09,cy,cx-.035,cy-.08,cx,cy-.03);c.bezierCurveTo(cx+.035,cy-.08,cx+.09,cy,cx,cy+.055);c.fillStyle='#e8202a'}c.fill()};
+ win(.13,1);win(.67,0);
+ // gold double door + red carpet
+ c.beginPath();c.moveTo(.4,.97);c.lineTo(.62,.97);c.lineTo(.6,.92);c.lineTo(.42,.92);c.closePath();c.fillStyle='#e8303a';c.fill();
+ c.beginPath();c.roundRect(.4,.56,.22,.38,[.09,.09,0,0]);c.fillStyle='#f5c542';c.fill();ln(.03);
+ c.beginPath();c.roundRect(.425,.6,.08,.32,[.06,0,0,0]);c.roundRect(.515,.6,.08,.32,[0,.06,0,0]);c.fillStyle='#7a2a20';c.fill();
+ c.beginPath();c.arc(.495,.78,.012,0,7);c.arc(.525,.78,.012,0,7);c.fillStyle='#ffd84a';c.fill();
+ // little coin stack + sparkle
+ for(let k=0;k<3;k++){c.beginPath();c.ellipse(.86,.9-k*.03,.04,.018,0,0,7);c.fillStyle='#ffd23f';c.fill();c.lineWidth=.01;c.strokeStyle='#b07a10';c.stroke()}
+ if(bl){c.fillStyle='#fff';c.beginPath();c.moveTo(.9,.22);c.lineTo(.91,.25);c.lineTo(.94,.26);c.lineTo(.91,.27);c.lineTo(.9,.3);c.lineTo(.89,.27);c.lineTo(.86,.26);c.lineTo(.89,.25);c.closePath();c.fill()}};
+S.casinoIcon=c=>{c.save();c.translate(.02,.16);c.scale(.96,.8);S.casino(c);c.restore()};
+
 S.dockIcon=c=>{c.fillStyle='#9fd6e0';c.fillRect(.05,.55,.9,.4);c.fillStyle='#6b4a32';c.fillRect(.22,.5,.08,.42);c.fillRect(.7,.5,.08,.42);for(let k=0;k<3;k++){c.fillStyle=k%2?'#b97f48':'#d59d62';c.fillRect(.12,.2+k*.12,.76,.11)}c.lineWidth=.05;c.strokeStyle=OL;c.strokeRect(.12,.2,.76,.36)};
 // v40 码头小屋: chunky pixel hut (12x17 px grid in a 1x1 unit box)
 S.dockhut=c=>{const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x/12,y/17,w/12+.002,h/17+.002)};

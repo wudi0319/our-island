@@ -2,8 +2,9 @@
 const W=64,H=64,T=48; // map size, tile px (CSS)
 const WATER=0,SAND=1,GRASS=2,SOIL=3;
 const CROPS={carrot:{name:'胡萝卜',ms:60e3},tomato:{name:'番茄',ms:120e3},strawberry:{name:'草莓',ms:180e3}}; // per stage, testing speeds
-const TOOLS=[['hoe','锄地'],['seed','播种'],['can','浇水'],['basket','收获'],['axe','砍树'],['fence','篱笆','fenceIcon'],['gate','栅栏门','gateIcon'],['flower','花'],['tree','树'],['house','小屋'],['canteen','食堂','canteenIcon'],['dockhut','码头屋','dockhutIcon'],['dock','码头板','dockIcon'],['erase','拆除']];
-const SOLID={dockhut:1,tree:1,house:1,canteen:1,fence:1,rock:1};const BIG={house:1,canteen:1};const CANTEEN='胖仔食堂';
+const TOOLS=[['hoe','锄地'],['seed','播种'],['can','浇水'],['basket','收获'],['axe','砍树'],['fence','篱笆','fenceIcon'],['gate','栅栏门','gateIcon'],['flower','花'],['tree','树'],['house','小屋'],['canteen','食堂','canteenIcon'],['casino','赌场','casinoIcon'],['dockhut','码头屋','dockhutIcon'],['dock','码头板','dockIcon'],['erase','拆除']];
+const SOLID={dockhut:1,tree:1,house:1,canteen:1,casino:1,fence:1,rock:1};const BIG={house:1,canteen:1,casino:1};const CANTEEN='胖仔食堂',CASINO='小岛赌场';
+const bname=(o,i)=>o==='canteen'?CANTEEN:o==='casino'?CASINO:state.names[i]||'我们的家';
 
 // ---- world generation (seeded) ----
 function rng(seed){return()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}}
@@ -90,7 +91,7 @@ function update(dt){const p=state.player;let vx=jv.x,vy=jv.y;
 const toastEl=document.getElementById('toast');let tt;
 function toast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove('show'),1500)}
 function act(){const[x,y]=front();actAt(x,y)}
-function bigErr(x,y,k){if(k==='canteen'&&Object.values(state.obj).includes('canteen'))return'已经有胖仔食堂啦';if(!inb(x,y)||x<1||x>W-3||y<3)return'这里放不下';const i=idx(x,y),fp=foot(i);if(fp.length<16||fp.some(j=>state.ter[j]===WATER||state.obj[j]||state.crops[j]||state.ter[j]===SOIL||occ[j]!=null))return'需要4×4的空地哦';
+function bigErr(x,y,k){if(k==='canteen'&&Object.values(state.obj).includes('canteen'))return'已经有胖仔食堂啦';if(k==='casino'&&Object.values(state.obj).includes('casino'))return'已经有小岛赌场啦';if(!inb(x,y)||x<1||x>W-3||y<3)return'这里放不下';const i=idx(x,y),fp=foot(i);if(fp.length<16||fp.some(j=>state.ter[j]===WATER||state.obj[j]||state.crops[j]||state.ter[j]===SOIL||occ[j]!=null))return'需要4×4的空地哦';
  const p=state.player;state.obj[i]=k;rebuildOcc();const ok=canStand(p.x,p.y);delete state.obj[i];rebuildOcc();return ok?null:'离太近啦，退后一点'}
 const DOCK_WOOD=2;
 const N4=[[0,1],[1,0],[-1,0],[0,-1]],isWater=(x,y)=>inb(x,y)&&state.ter[idx(x,y)]===WATER;
@@ -114,7 +115,7 @@ function hutErr(x,y){if(!inb(x,y)||x<1||y<1||x>W-2||y>H-2)return'这里放不下
  if(idx(Math.floor(p.x),Math.floor(p.y))===i)return'离太近啦，退后一点';state.obj[i]='dockhut';const ok=canStand(p.x,p.y);delete state.obj[i];return ok?null:'离太近啦，退后一点'}
 const pErr=q=>q.k==='dock'?dockErr(q.x,q.y):q.k==='dockhut'?hutErr(q.x,q.y):bigErr(q.x,q.y,q.k);
 function actAt(x,y){if(!inb(x,y))return;const i=idx(x,y);
- if(occ[i]!=null){const a=occ[i],kind=state.obj[a];if(tool==='erase'){delete state.obj[a];delete state.names[a];rebuildOcc();save();return toast(kind==='canteen'?'胖仔食堂拆掉了，美食记录还在哦':'小屋拆掉了')}
+ if(occ[i]!=null){const a=occ[i],kind=state.obj[a];if(tool==='erase'){delete state.obj[a];delete state.names[a];rebuildOcc();save();return toast(kind==='canteen'?'胖仔食堂拆掉了，美食记录还在哦':kind==='casino'?'小岛赌场拆掉了，记录还在哦':'小屋拆掉了')}
   return i===a?openBuilding(a):kind==='house'?openSign(a):openBuilding(a)}
  const t=state.ter[i],o=state.obj[i],c=state.crops[i];
  const p=state.player,pi=idx(Math.floor(p.x),Math.floor(p.y));
@@ -129,7 +130,7 @@ function actAt(x,y){if(!inb(x,y))return;const i=idx(x,y);
  case'erase':if(o==='dockhut'){const ch=dockChain(i),other=dockChain();delete state.obj[i];const rest=dockChain(),pt=idx(Math.floor(p.x),Math.floor(p.y));state.obj[i]='dockhut';const gone=[...ch].filter(j=>!rest.has(j));
   if(gone.includes(pt))return toast('先回到岸上再拆码头小屋哦');if(!(window.__autoConfirm||confirm('拆掉码头小屋会连着拆掉它的'+gone.length+'片码头板，鱼篓和图鉴都会保留。确定吗？')))return;delete state.obj[i];gone.forEach(j=>delete state.obj[j]);toast('码头小屋拆掉了（鱼篓和图鉴还在）');break}
   if(o==='dock'){const pt=idx(Math.floor(p.x),Math.floor(p.y));delete state.obj[i];if(pt===i||!canStand(p.x,p.y)){state.obj[i]='dock';return toast('先离开这块码头再拆哦')}toast('码头拆掉了');break}if(o){delete state.obj[i];if(state.fhp)delete state.fhp[i]}else if(c)delete state.crops[i];else if(t===SOIL)state.ter[i]=GRASS;else return;break;
- case'house':case'canteen':{const er=bigErr(x,y,tool);if(er)return toast(er);state.obj[i]=tool;if(tool==='house')state.names[i]='我们的家';else toast('胖仔食堂开张啦！');rebuildOcc();break}
+ case'house':case'canteen':case'casino':{const er=bigErr(x,y,tool);if(er)return toast(er);state.obj[i]=tool;if(tool==='house')state.names[i]='我们的家';else toast(tool==='casino'?'小岛赌场开张啦！🎰':'胖仔食堂开张啦！');rebuildOcc();break}
  default:if((tool==='fence'||tool==='gate')&&(o==='fence'||o==='gate'))return window.fenceRepair&&fenceRepair(i);if(i===pi)return;if(t===WATER)return toast('不能放在水里');if(o||c||t===SOIL)return toast('这里放不下');state.obj[i]=tool;if(SOLID[tool]&&!canStand(p.x,p.y)){delete state.obj[i];return toast('离太近啦，退后一点')}if(window.fenceNew&&(tool==='fence'||tool==='gate'))fenceNew(i)}
  rebuildOcc();save();renderInv()}
 
@@ -163,7 +164,7 @@ function draw(){frame++;const p=state.player;
    if(o==='gate')sprite(S.gate,x,y,isFence(x,y-1)||isFence(x,y+1),gateAng[i]||0);
    else if(o==='fence')sprite(S.fence,x,y,isFence(x,y-1),isFence(x+1,y),isFence(x,y+1),isFence(x-1,y));
    if((o==='fence'||o==='gate')&&window.fenceFx)fenceFx(x,y,i);
-   else if(BIG[o]){ctx.save();ctx.translate((x-1.6)*T,(y-2.99)*T);ctx.scale(T*4.2,T*4.2);S[o](ctx);ctx.restore();drawSign(x,y,o==='canteen'?CANTEEN:state.names[i]||'我们的家')}
+   else if(BIG[o]){ctx.save();ctx.translate((x-1.6)*T,(y-2.99)*T);ctx.scale(T*4.2,T*4.2);S[o](ctx);ctx.restore();drawSign(x,y,bname(o,i))}
    else if(o==='tree'){ctx.save();ctx.translate((x-.15)*T,(y-.6)*T);ctx.scale(T*1.3,T*1.6);S.tree(ctx);ctx.restore()}
    else if(o==='dockhut'){ctx.save();ctx.translate((x-.1)*T,(y-.75)*T);ctx.scale(T*1.2,T*1.7);S.dockhut(ctx);ctx.restore()}
    else if(o&&o!=='dock')sprite(S[o],x,y)}
@@ -198,8 +199,8 @@ function showPrev(x,y){prev=tool==='dock'||tool==='dockhut'?{x,y,k:tool}:{x:Math
 function cancelPrev(){prev=null;pvBar.classList.add('hidden')}
 document.getElementById('pvOk').addEventListener('click',()=>{if(!prev)return;const er=pErr(prev);if(er)return toast(er);const{x,y,k}=prev,t0=tool;tool=k;cancelPrev();actAt(x,y);tool=t0});
 document.getElementById('pvNo').addEventListener('click',cancelPrev);
-function tapBuilding(wx,wy){const p=state.player;for(const k in state.obj)if(BIG[state.obj[k]]){const x=k%W,y=k/W|0,cant=state.obj[k]==='canteen';
-  const q=plaque(x,y,cant?CANTEEN:state.names[k]||'我们的家');if(wx>=q.x-.1&&wx<=q.x+q.w+.1&&wy>=q.y-.15&&wy<=q.y+q.h+.15){cant?openBuilding(+k):openSign(+k);return true}
+function tapBuilding(wx,wy){const p=state.player;for(const k in state.obj)if(BIG[state.obj[k]]){const x=k%W,y=k/W|0,cant=state.obj[k]!=='house';
+  const q=plaque(x,y,bname(state.obj[k],k));if(wx>=q.x-.1&&wx<=q.x+q.w+.1&&wy>=q.y-.15&&wy<=q.y+q.h+.15){cant?openBuilding(+k):openSign(+k);return true}
   if(tool!=='erase'&&wx>=x-1&&wx<=x+3&&wy>=y-1.4&&wy<=y+1){openBuilding(+k);return true}}return false}
 cv.addEventListener('pointerdown',e=>{const[wx,wy]=toWorld(e);if(window.babyTap&&babyTap(wx,wy))return;
  tap={id:e.pointerId,sx:e.clientX,sy:e.clientY,t:performance.now(),moved:false,px:prev&&prev.x,py:prev&&prev.y,wx,wy};try{cv.setPointerCapture(e.pointerId)}catch(_){}});
@@ -217,7 +218,7 @@ const houseEl=document.getElementById('house'),listEl=document.getElementById('w
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeUrl=u=>{u=(u||'').trim();if(!u)return'';if(!/^https?:\/\//i.test(u))u='https://'+u;try{const x=new URL(u);return/^https?:$/.test(x.protocol)?x.href:''}catch(e){return''}};
 const fmt=ts=>{const d=new Date(ts);return`${d.getMonth()+1}月${d.getDate()}日`};
-function openBuilding(a){houseA=a;const cant=state.obj[a]==='canteen';state.foodList=state.foodList||[];
+function openBuilding(a){if(state.obj[a]==='casino'){if(window.Casino)Casino.open();return}houseA=a;const cant=state.obj[a]==='canteen';state.foodList=state.foodList||[];
  document.getElementById('houseTitle').textContent=cant?'🍜 '+CANTEEN:'🏠 '+(state.names[a]||'我们的家');houseEl.classList.toggle('room',!cant);closeForm();if(cant)renderList();houseEl.classList.remove('hidden')}
 function renderList(){const L=state.foodList||[];const todo=L.filter(i=>!i.done),done=L.filter(i=>i.done).sort((a,b)=>b.done-a.done);
  const card=i=>`<li data-id="${i.id}" class="${i.done?'done':''}"><button class="chk" data-a="toggle">${i.done?'✔':''}</button><div class="txt"><b>${esc(i.name)}</b>${i.note?`<p>${esc(i.note)}</p>`:''}${i.url?`<a href="${esc(i.url)}" target="_blank" rel="noopener">🔗 打开链接</a>`:''}<small>${i.done?'吃过了 · '+fmt(i.done):'添加于 '+fmt(i.added)}</small></div><button class="ic" data-a="edit">✏️</button><button class="ic" data-a="del">🗑️</button></li>`;
