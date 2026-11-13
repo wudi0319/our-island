@@ -3,7 +3,7 @@
 const SB_URL='https://api.pangzaixiaodao.party',SB_KEY='sb_publishable_DqsCbDSeAxe26HP8XWFPIw_nCulbx0z';
 const K_AUTH='our-island-auth',K_BAK='our-island-backup',K_BASE='our-island-cloud-base';
 const ROLES={jimao:{name:'鸡毛',char:'yellow'},xiaobai:{name:'小白',char:'white'}};
-const GAME=['js/sprites.js','js/game.js','js/baby.js','js/info.js','js/animals.js','js/intruders.js','js/shop.js','js/fishing.js','js/casino.js'],VER='51';
+const GAME=['js/sprites.js','js/game.js','js/baby.js','js/info.js','js/animals.js','js/intruders.js','js/shop.js','js/fishing.js','js/casino.js'],VER='52';
 const L=LocalStore,J=JSON.stringify,$=id=>document.getElementById(id);
 let sb=null;try{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}})}catch(e){console.warn('supabase lib',e)}
 let auth=null;try{auth=JSON.parse(localStorage.getItem(K_AUTH))}catch(e){}
