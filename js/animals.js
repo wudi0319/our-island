@@ -2,7 +2,8 @@
 // Merge-friendly: per-id map; feed counts are per-role counters (each phone only bumps its own) so concurrent feeds sum.
 // Births are deterministic ids (<pig>-b<n>) so both phones agree. One phone is the "host" (spawns + saves wander positions every 30s).
 // ---- tuning: hunger timers ----
-const ANI_HUNGRY_MS=48*36e5,ANI_LEAVE_MS=72*36e5,ANI_TOMB_KEEP_MS=7*864e5; // 💢 after 48h unfed, leaves after 72h; tombstones pruned after 7 days
+// v48: pigs & cows (and their babies) starve 30% sooner: 💢 48h->33.6h, leaves 72h->50.4h. Grace: nobody leaves before 2026-11-14 00:00 Sydney (12h after release) so ones fed 50-72h ago get a chance to eat.
+const ANI_HUNGRY_MS=48*36e5*.7,ANI_LEAVE_MS=72*36e5*.7,ANI_TOMB_KEEP_MS=7*864e5,ANI_LEAVE_GRACE=Date.UTC(2026,10,13,13); // tombstones pruned after 7 days
 // lastFed is per-phone (lf[role]=ts), effective = newest => merge never loses a feed. Leaving sets gone=ts (tombstone) so the per-id merge can't resurrect it.
 const lastFed=a=>Math.max(0,...Object.values(a.lf||{}).map(Number));
 const ANI={pig:{name:'小猪',sp:.7,cap:4},cow:{name:'小牛',sp:.5,cap:3},piglet:{name:'迷你小猪',sp:.9},calf:{name:'小牛犊',sp:.7}};const BABY={pig:'piglet',cow:'calf'},KIDS=['piglet','calf'];;
@@ -69,7 +70,7 @@ function animalsUpdate(dt){sync();const A=state.animals;
   if(spawnT<0){spawnT=120+Math.random()*120;const c={pig:0,cow:0};for(const id in A)if(!A[id].gone&&c[A[id].k]!=null&&!A[id].mom)c[A[id].k]++;
    const k=Math.random()<.55?'pig':'cow',k2=k==='pig'?'cow':'pig',pick=c[k]<ANI[k].cap?k:c[k2]<ANI[k2].cap?k2:null;if(pick&&spawnAnimal(pick)){toast('岛上来了一只'+ANI[pick].name+'！');save()}}
   const now=Date.now();let gch=false;for(const id in A){const a=A[id];if(a.gone){if(now-a.gone>ANI_TOMB_KEEP_MS){delete A[id];gch=true}continue}
-   if(now-lastFed(a)>ANI_LEAVE_MS){a.gone=now;gch=true;if(live[id])live[id].fade=1.2;toast(ANI[a.k].name+'饿坏了，跑掉了…')}}if(gch)save();
+   if(now-lastFed(a)>ANI_LEAVE_MS&&now>ANI_LEAVE_GRACE){a.gone=now;gch=true;if(live[id])live[id].fade=1.2;toast(ANI[a.k].name+'饿坏了，跑掉了…')}}if(gch)save();
   if(posT<0){posT=30;let ch=false;for(const id in live){const l=live[id];if(Math.hypot(l.x-l.ax,l.y-l.ay)>.3){commit(id);ch=true}}if(ch)save()}}
  buttons()}
 // ---- buttons ----

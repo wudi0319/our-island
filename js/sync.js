@@ -3,7 +3,7 @@
 const SB_URL='https://api.pangzaixiaodao.party',SB_KEY='sb_publishable_DqsCbDSeAxe26HP8XWFPIw_nCulbx0z';
 const K_AUTH='our-island-auth',K_BAK='our-island-backup',K_BASE='our-island-cloud-base';
 const ROLES={jimao:{name:'鸡毛',char:'yellow'},xiaobai:{name:'小白',char:'white'}};
-const GAME=['js/sprites.js','js/game.js','js/baby.js','js/info.js','js/animals.js','js/intruders.js','js/shop.js','js/fishing.js','js/casino.js'],VER='47';
+const GAME=['js/sprites.js','js/game.js','js/baby.js','js/info.js','js/animals.js','js/intruders.js','js/shop.js','js/fishing.js','js/casino.js'],VER='48';
 const L=LocalStore,J=JSON.stringify,$=id=>document.getElementById(id);
 let sb=null;try{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}})}catch(e){console.warn('supabase lib',e)}
 let auth=null;try{auth=JSON.parse(localStorage.getItem(K_AUTH))}catch(e){}
@@ -46,20 +46,26 @@ function coreSig(d){const c=Object.assign({},d);
  return J(c)}
 let lastCore='',lastPushT=0;const VOLATILE_MS=15000;
 async function push(){if(!started||!auth||!window.Game)return;if(pushing){again=true;return}
- const data=strip(Game.state),sig=J(data);if(sig===lastSig)return;
+ // v48: snapshot by value. strip() is shallow, so data.inv/fishN used to alias live state: a bet or payout made while the save
+ // was in flight leaked into base, and the next merge with the other phone's change erased it (food jumping back ~20).
+ const sig=J(strip(Game.state));if(sig===lastSig)return;const data=JSON.parse(sig);
  const cs=coreSig(data),wait=lastPushT+VOLATILE_MS-Date.now();if(cs===lastCore&&wait>0&&!document.hidden){clearTimeout(timer);timer=setTimeout(push,wait);return}
  if(version===0&&auth.role!=='xiaobai')return; // never seed the island from 鸡毛's phone
  pushing=true;let retry=0;
  try{const r=await rpc('save_island',{pw:auth.pw,data,base_version:version});
   if(r&&r.ok){version=r.version;lastSig=sig;lastCore=cs;lastPushT=Date.now();setBase(data,version);net(true);bc('island-updated',sig.length<60000?{v:version,data}:{v:version})}
-  else{await pull();retry=300}}
+  else{await pull(true);retry=300}}
  catch(e){net(false);retry=8000;if(badPw(e))return logout('密码好像改了，请重新登录')}
  finally{pushing=false}
+ if(pullAfter){pullAfter=false;pullSafe()}
  if(again||retry){again=false;schedule(retry||300)}}
-async function pull(){if(!started||!auth)return;const r=await rpc('get_island',{pw:auth.pw});net(true);lastPullT=Date.now();applyRemote(r)}
-let lastPullT=0;
-function applyRemote(r){
+// v48: never merge a cloud copy while our own save is in flight: that copy may already contain our change, and the
+// additive inv/fishN merge would then count it twice (food jumping ±20 around casino spins). Defer and re-pull after.
+let lastPullT=0,pullAfter=false;
+async function pull(inPush){if(!started||!auth)return;if(pushing&&!inPush){pullAfter=true;return}const r=await rpc('get_island',{pw:auth.pw});net(true);lastPullT=Date.now();applyRemote(r,inPush)}
+function applyRemote(r,inPush){
  if(!r||!r.data||r.version<=version)return;
+ if(pushing&&!inPush){pullAfter=true;return}
  const cur=Game.state,loc=strip(cur),merged=base?m3(base.data,loc,r.data):clone(r.data);
  version=r.version;setBase(r.data,r.version);lastSig=J(r.data);
  const ns=Object.assign(merged,{player:cur.player,updatedAt:Date.now()});
