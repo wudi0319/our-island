@@ -6,8 +6,8 @@
 const ANI_LEAVE_MS=12*36e5,ANI_HUNGRY_MS=ANI_LEAVE_MS*2/3,ANI_TOMB_KEEP_MS=7*864e5; // tombstones pruned after 7 days
 // lastFed is per-phone (lf[role]=ts), effective = newest => merge never loses a feed. Leaving sets gone=ts (tombstone) so the per-id merge can't resurrect it.
 const lastFed=a=>Math.max(0,...Object.values(a.lf||{}).map(Number));
-const ANI={pig:{name:'小猪',sp:.7,cap:4},cow:{name:'小牛',sp:.5,cap:3},piglet:{name:'迷你小猪',sp:.9},calf:{name:'小牛犊',sp:.7}};const BABY={pig:'piglet',cow:'calf'},KIDS=['piglet','calf'];;
-const live={};let initLf=false;let spawnT=20,posT=30;
+const ANI={pig:{name:'小猪',sp:.7,cap:4},cow:{name:'小牛',sp:.5,cap:4},piglet:{name:'迷你小猪',sp:.9},calf:{name:'小牛犊',sp:.7}};const BABY={pig:'piglet',cow:'calf'},KIDS=['piglet','calf'];;
+const live={};let initLf=false;let spawnB=null,posT=30;const RESPAWN_MS=90e3;
 const role=()=>window.Sync&&Sync.auth?Sync.auth.role:'me';
 function isHost(){if(!window.Sync||!Sync.auth||Sync.auth.role==='xiaobai')return true;const o=Sync.others.xiaobai;return!(o&&o.here&&!o.hidden)}
 const fedTotal=a=>Object.values(a.fed||{}).reduce((s,n)=>s+(+n||0),0);
@@ -66,9 +66,12 @@ function animalsUpdate(dt){sync();const A=state.animals;
   // periodic unstick: haven't meaningfully moved for ~2.5s, pick a random free neighbor as a short target
   if(Math.hypot(l.x-(l.lx||l.x),l.y-(l.ly||l.y))>.12){l.lx=l.x;l.ly=l.y;l.stuck=0}else l.stuck=(l.stuck||0)+dt;
   if((l.stuck||0)>2.5&&l.run<=0){const alt=pickStep(l,id,rad,false,null,null,sp);if(alt){l.tx=alt.nx;l.ty=alt.ny;l.t=3;l.stuck=0}else{const a2=pickStep(l,null,rad,false,null,null,sp);if(a2){l.tx=l.x+(a2.nx-l.x)*2.5;l.ty=l.y+(a2.ny-l.y)*2.5;l.t=3;l.sq=2;l.stuck=0}else l.stuck=1.5}}}
- if(isHost()){spawnT-=dt;posT-=dt;
-  if(spawnT<0){spawnT=120+Math.random()*120;const c={pig:0,cow:0};for(const id in A)if(!A[id].gone&&c[A[id].k]!=null&&!A[id].mom)c[A[id].k]++;
-   const k=Math.random()<.55?'pig':'cow',k2=k==='pig'?'cow':'pig',pick=c[k]<ANI[k].cap?k:c[k2]<ANI[k2].cap?k2:null;if(pick&&spawnAnimal(pick)){toast('岛上来了一只'+ANI[pick].name+'！');save()}}
+ if(isHost()){posT-=dt;
+  // v51: keep at least 4 adult pigs + 4 adult cows. One arrives per 90s time slot (the kind that is shorter; tie alternates).
+  // The id is the slot number, so if both phones briefly act as host in the same slot they make the same animal and the merge keeps one.
+  const bk=Math.floor(Date.now()/RESPAWN_MS);if(bk!==spawnB){spawnB=bk;const c={pig:0,cow:0};for(const id in A)if(!A[id].gone&&c[A[id].k]!=null&&!A[id].mom)c[A[id].k]++;
+   const need=['pig','cow'].filter(k=>c[k]<ANI[k].cap),pick=need.length===1?need[0]:need.length?(c.pig<c.cow?'pig':c.cow<c.pig?'cow':bk%2?'cow':'pig'):null,rid='r'+bk.toString(36);
+   if(pick&&!A[rid]&&spawnAnimal(pick,null,null,{id:rid})){toast('岛上来了一只'+ANI[pick].name+'！');save()}}
   const now=Date.now();let gch=false;for(const id in A){const a=A[id];if(a.gone){if(now-a.gone>ANI_TOMB_KEEP_MS){delete A[id];gch=true}continue}
    if(now-lastFed(a)>ANI_LEAVE_MS){a.gone=now;gch=true;if(live[id])live[id].fade=1.2;toast(ANI[a.k].name+'饿坏了，跑掉了…')}}if(gch)save();
   if(posT<0){posT=30;let ch=false;for(const id in live){const l=live[id];if(Math.hypot(l.x-l.ax,l.y-l.ay)>.3){commit(id);ch=true}}if(ch)save()}}
