@@ -2,8 +2,9 @@
 // Merge-friendly: per-id map; feed counts are per-role counters (each phone only bumps its own) so concurrent feeds sum.
 // Births are deterministic ids (<pig>-b<n>) so both phones agree. One phone is the "host" (spawns + saves wander positions every 30s).
 // ---- tuning: hunger timers ----
-// v48: pigs & cows (and their babies) starve 30% sooner: 💢 48h->33.6h, leaves 72h->50.4h. Grace: nobody leaves before 2026-11-14 00:00 Sydney (12h after release) so ones fed 50-72h ago get a chance to eat.
-const ANI_HUNGRY_MS=48*36e5*.7,ANI_LEAVE_MS=72*36e5*.7,ANI_TOMB_KEEP_MS=7*864e5,ANI_LEAVE_GRACE=Date.UTC(2026,10,13,13); // tombstones pruned after 7 days
+// v49: pigs & cows (and 迷你小猪/小牛犊) run away after 8h unfed; 💢 at 2/3 of that (5h20m). Feeding = 1 food, resets the timer.
+// Grace: nobody runs away before 2026-11-13 21:30 Sydney (8h after v49 went live) so both phones get a chance to feed first.
+const ANI_LEAVE_MS=8*36e5,ANI_HUNGRY_MS=ANI_LEAVE_MS*2/3,ANI_TOMB_KEEP_MS=7*864e5,ANI_LEAVE_GRACE=Date.UTC(2026,10,13,10,30); // tombstones pruned after 7 days
 // lastFed is per-phone (lf[role]=ts), effective = newest => merge never loses a feed. Leaving sets gone=ts (tombstone) so the per-id merge can't resurrect it.
 const lastFed=a=>Math.max(0,...Object.values(a.lf||{}).map(Number));
 const ANI={pig:{name:'小猪',sp:.7,cap:4},cow:{name:'小牛',sp:.5,cap:3},piglet:{name:'迷你小猪',sp:.9},calf:{name:'小牛犊',sp:.7}};const BABY={pig:'piglet',cow:'calf'},KIDS=['piglet','calf'];;
